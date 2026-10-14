@@ -2,7 +2,7 @@
  *  黄巾之乱浮卡（点开看详情弹窗，可收成小胶囊）与可收起的图例（默认收起），两者的开合记在本地，避免长期遮挡地图格子。
  *  数据与动作来自 worldSession，这里只负责量尺寸与组装。
  *  移动目标标记（v28 AISLG-78）：当前格打徽章、尚未走过的路线格打小点，随本地时钟推进。
- *  叠加层（领地边界 / 行军路线 / 书签）与右下角小地图见 MapOverlay / MiniMap。
+ *  叠加层（领地边界 / 行军路线 / 书签）见 MapOverlay，小地图合并全图城池与本机标记。
  */
 
 import { useEffect, useMemo, useRef } from 'react';
@@ -19,7 +19,8 @@ import type { WorldSession } from '../../state/worldSession';
 import { WorldMapGrid } from '../WorldMapGrid';
 import { WorldMapLegend } from '../WorldMapLegend';
 import { MapOverlay, type RouteMarch } from './MapOverlay';
-import { MiniMap } from './MiniMap';
+import type { MapOverviewSession } from '../../state/mapOverview';
+import { WorldMinimap } from './WorldMinimap';
 
 /** 每次平移的格数（键盘越过边缘 / 方向键按钮） */
 export const PAN_STEP = 5;
@@ -41,9 +42,11 @@ interface WorldMapStageProps {
   onOpenYellowTurban: () => void;
   /** 点地块：选中并在右侧显示详情与操作 */
   onSelect: (x: number, y: number) => void;
+  /** 世界小地图（v58 AISLG-160）：全图城池点位与展开状态 */
+  overview: MapOverviewSession;
 }
 
-export function WorldMapStage({ world, movingTargets, city, cities, bookmarks, accountId, layers, yellowTurban, onOpenYellowTurban, onSelect }: WorldMapStageProps) {
+export function WorldMapStage({ world, movingTargets, city, cities, bookmarks, accountId, layers, yellowTurban, onOpenYellowTurban, onSelect, overview }: WorldMapStageProps) {
   const copy = useCopy();
   const { COPY, RESOURCE_LABEL, MAPUI_COPY, YT_COPY, UX_COPY } = copy;
   const boxRef = useRef<HTMLDivElement | null>(null);
@@ -196,6 +199,8 @@ export function WorldMapStage({ world, movingTargets, city, cities, bookmarks, a
         )
       ) : null}
 
+      {win ? <WorldMinimap overview={overview} win={win} cities={cities} marches={marching} bookmarks={bookmarks} onPanTo={world.panTo} /> : null}
+
       {win ? (
         <div className="pointer-events-none absolute bottom-3 left-3.5 flex max-w-[calc(100%-28px)] flex-col items-start gap-1">
           {legendOpen ? (
@@ -215,8 +220,6 @@ export function WorldMapStage({ world, movingTargets, city, cities, bookmarks, a
           </button>
         </div>
       ) : null}
-
-      {win ? <MiniMap win={win} cities={cities} marches={marching} bookmarks={bookmarks} onJump={world.centerOn} /> : null}
     </div>
   );
 }
