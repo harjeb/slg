@@ -5,6 +5,10 @@ import { useState } from 'react';
 import { useGame } from '../../state/GameContext';
 import { useNav } from '../../state/NavContext';
 import { activeMarches } from '../../state/progressItems';
+import { questClaimable } from '../../state/questSession';
+import { useBrowserNotify } from '../../state/useBrowserNotify';
+import { useNavShortcuts } from '../../state/useNavShortcuts';
+import { useCopy } from '../../i18n/bundle';
 import { AgentPage } from '../pages/AgentPage';
 import { ArmyPage } from '../pages/ArmyPage';
 import { CityPage } from '../pages/CityPage';
@@ -20,20 +24,25 @@ import { Sidebar, type NavBadges } from './Sidebar';
 import { TopBar } from './TopBar';
 
 export function AppShell() {
+  const { UX_COPY } = useCopy();
   const { session, incoming, openWarning, openLeaderboard } = useGame();
   const { page, go, seenReportId } = useNav();
   const [dialog, setDialog] = useState<AccountDialogMode | null>(null);
   const [exchangeRequest, setExchangeRequest] = useState(0);
   const city = session.city;
+  // 数字键 1–9 切页；页面不在前台时的系统通知（开关在账号菜单）
+  useNavShortcuts(go);
+  const notify = useBrowserNotify(city, session.techSession.tech?.research ?? null, incoming);
 
-  // 导航角标（docs 第 4 节）：总览 = NPC 来袭数（红）；城池 = 建造队列条数；军队 = 在外行军数；
-  // 养成 = 进行中的研究数；情报 = 进入情报页后新到的战报数；Agent 无
+  // 导航角标（docs 第 4 节）：总览 = NPC 来袭数（红）；城池 = 建造队列条数，队列空闲时显示提醒点；军队 = 在外行军数；
+  // 养成 = 可领取的任务奖励数（金），没有可领时为进行中的研究数；情报 = 进入情报页后新到的战报数；Agent 无
   const newReports = (session.world.battleReports ?? []).filter((report) => report.id > seenReportId).length;
+  const claimable = questClaimable(session.questSession).total;
   const badges: NavBadges = {
     overview: { count: incoming.length, hot: true },
-    city: { count: city?.queue.length ?? 0 },
+    city: { count: city?.queue.length ?? 0, dot: city !== null && city.queue.length === 0, title: city?.queue.length === 0 ? UX_COPY.nav.buildIdle : undefined },
     army: { count: city ? activeMarches(city).length : 0 },
-    growth: { count: session.techSession.tech?.research ? 1 : 0 },
+    growth: claimable > 0 ? { count: claimable, gold: true, title: UX_COPY.nav.claimable(claimable) } : { count: session.techSession.tech?.research ? 1 : 0 },
     intel: { count: page === 'intel' ? 0 : newReports },
   };
 
@@ -58,6 +67,7 @@ export function AppShell() {
         chatOpen={session.chat.open}
         chatUnread={session.chat.unreadTotal}
         onToggleChat={() => session.chat.setOpen(!session.chat.open)}
+        notify={notify}
       />
       <TopBar
         page={page}

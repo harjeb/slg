@@ -7,6 +7,7 @@ import type { HeroView } from '../api/protocol-hero';
 import { FORMATION_KINDS, type FormationKind, type FormationPreviewRules } from '../api/protocol-combat';
 import { previewFormation } from '../api/formation-preview';
 import { useCopy } from '../i18n/bundle';
+import { useNav } from '../state/NavContext';
 import type { TroopKind } from '../api/protocol';
 import { combatText, formationName, specialtyName, specialtyEffect } from '../copy-combat';
 
@@ -43,7 +44,8 @@ function lineupKeyOf(lineup: Array<ArenaFighterView | null> | null): string {
 }
 
 export function LineupEditor({ role, heroes, lineup, formations, rules, busy, copy, showTitle = true, onSave }: LineupEditorProps) {
-  const { TROOP_LABEL } = useCopy();
+  const { TROOP_LABEL, UX_COPY } = useCopy();
+  const { page, go } = useNav();
   const [draft, setDraft] = useState<Array<string | null>>([null, null, null]);
   const [draftFormations, setDraftFormations] = useState<FormationKind[]>(['balanced', 'balanced', 'balanced']);
   const lineupKey = lineupKeyOf(lineup);
@@ -70,7 +72,15 @@ export function LineupEditor({ role, heroes, lineup, formations, rules, busy, co
         </div>
       ) : null}
       {heroes.length === 0 ? (
-        <p className="truncate text-[11.5px] text-warn">{copy.noHeroes}</p>
+        <p className="flex items-center justify-between gap-2 text-[11.5px] text-warn">
+          <span className="min-w-0 truncate">{copy.noHeroes}</span>
+          {/* 酒馆在养成页：已在养成页（竞技场卡）时不再给跳转 */}
+          {page !== 'growth' ? (
+            <button type="button" role={`${role}-去招募`} className="btn shrink-0 px-2 py-0.5 text-[11px]" onClick={() => go('growth')}>
+              {UX_COPY.lineup.goRecruit}
+            </button>
+          ) : null}
+        </p>
       ) : (
         <div className="grid grid-cols-3 gap-1">
           {draft.map((id, index) => {

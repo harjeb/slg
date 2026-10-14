@@ -59,6 +59,7 @@ export function Modal({ role, title, onClose, size = 'md', accent = 'accent', fi
     <div role={role} className="fixed inset-0 z-50 grid place-items-center bg-black/55 p-3" onClick={onClose}>
       <div
         role={`${role}-面板`}
+        aria-modal="true"
         className={`flex min-h-0 w-full flex-col overflow-hidden rounded-lg border border-line bg-panel shadow-2xl ${
           size === 'sm' ? 'max-w-[400px]' : 'max-w-[640px]'
         } ${fill ? 'h-[min(560px,calc(100dvh-24px))]' : 'max-h-[calc(100dvh-24px)]'}`}

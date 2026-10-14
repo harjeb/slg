@@ -1,11 +1,13 @@
-/** 地图工具条：回主城 · 缩放 · 坐标跳转 · 方向键平移 · 当前位置。
+/** 地图工具条：回主城 · 书签 · 缩放 · 坐标跳转 · 方向键平移 · 当前位置。
  *  跳转：输入 (x, y) 居中定位并选中该地块；到达世界边缘的方向禁用平移，避免点了没反应。
  */
 
 import { useState } from 'react';
 import { useCopy } from '../../i18n/bundle';
+import type { MapBookmarks } from '../../state/mapBookmarks';
 import type { WorldSession } from '../../state/worldSession';
 import { MapZoomControls } from '../MapZoomControls';
+import { BookmarkMenu } from './BookmarkMenu';
 import { PAN_STEP } from './WorldMapStage';
 
 /** 坐标跳转输入解析：两个都必须是非负整数；已知世界边长时须落在 0..size-1，否则视为无效 */
@@ -29,7 +31,7 @@ function parseCoord(rawX: string, rawY: string, size: number | null): { x: numbe
 const ctrlBtn =
   'cursor-pointer rounded border border-line bg-panel-2 text-dim transition-colors hover:border-accent-dim hover:text-fg disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-line disabled:hover:text-dim';
 
-export function MapToolbar({ world }: { world: WorldSession }) {
+export function MapToolbar({ world, bookmarks, accountId }: { world: WorldSession; bookmarks: MapBookmarks; accountId: string | null }) {
   const copy = useCopy();
   const { COPY } = copy;
   const win = world.window;
@@ -61,6 +63,7 @@ export function MapToolbar({ world }: { world: WorldSession }) {
         </span>
         {COPY.worldMap.centerCity}
       </button>
+      <BookmarkMenu world={world} bookmarks={bookmarks} accountId={accountId} className={ctrlBtn} />
       <MapZoomControls dims={win ? { w: win.w, h: win.h } : null} zoom={world.viewSize} onZoom={world.zoomTo} />
       <div role="世界地图视图-坐标跳转" className="flex items-center gap-1">
         {(['x', 'y'] as const).map((axis) => (

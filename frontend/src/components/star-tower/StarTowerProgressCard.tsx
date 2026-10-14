@@ -61,7 +61,7 @@ export function StarTowerProgressCard({ session }: StarTowerProgressCardProps) {
             role="将星塔页-挑战"
             disabled={!canChallenge}
             onClick={() => void challenge()}
-            className="btn w-full truncate"
+            className="btn btn-primary w-full truncate py-1.5 text-[12.5px]"
           >
             {busy ? C.challenging : C.challenge(tower.nextFloor)}
           </button>

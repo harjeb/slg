@@ -93,7 +93,7 @@ export function BuildingDetail({ city, kind, connection, onClose, onStartBuild, 
         <div role="城池页-建筑详情-消耗" className="font-mono text-[12px] leading-snug text-dim">
           <span className="text-faint">{chain ? COPY.buildingModal.costChainLabel(chain.levels) : COPY.buildingModal.costLabel} </span>
           {costParts(displayCost, city.resources).map((part, index) => (
-            <span key={part.label} className={part.insufficient ? 'text-accent' : undefined}>
+            <span key={part.label} className={part.insufficient ? 'text-st-error' : undefined}>
               {index > 0 ? ' · ' : ''}
               {part.label} {part.value}
               {part.insufficient ? COPY.buildingModal.insufficient : ''}
@@ -138,7 +138,7 @@ export function BuildingDetail({ city, kind, connection, onClose, onStartBuild, 
         </span>
         <button
           type="button"
-          className="btn shrink-0 px-3 py-1.5 text-[12.5px]"
+          className="btn btn-primary shrink-0 px-3 py-1.5 text-[12.5px]"
           role="城池页-建筑详情-建造按钮"
           disabled={disabled}
           onClick={() => (level > 0 ? onStartUpgrade(kind, chain ? selectableTarget : undefined) : onStartBuild(kind))}

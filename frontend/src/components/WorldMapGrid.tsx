@@ -1,13 +1,14 @@
 /** 世界地图视野（参考 prototypes/city-dark.html「地图视野」模块）：撑满容器的地形色块网格 +
  *  城池形状标记 + 悬浮提示。野地 = 地形图标 + 右下角等级（越高越醒目）；
  *  城池按形状区分敌我，名字写在格内底部（窄屏隐藏，看悬浮提示），不再浮出遮挡相邻格。
+ *  领地边界 / 行军路线 / 书签由调用方传入的叠加层（map/MapOverlay）画在网格之上。
  *  键盘：方向键在格间移动焦点，越过视野边缘自动平移；Enter / 空格选中。
  *  拖曳（v23 AISLG-64）：按住地图拖动即平移视口——每拖过一格请求相邻窗口，剩余亚格
  *  位移用 transform 跟手；位移小于阈值视为点击选中，边界由服务端钳制，松手停在原地不回弹。
  *  只负责渲染与悬浮 / 选中态；地图数据与动作在 worldSession，组装在 WorldMapView。
  */
 
-import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import type { TileView, WorldMapResponseData } from '../api/protocol';
 import { useCopy } from '../i18n/bundle';
 import { tName } from '../i18n/names';
@@ -39,6 +40,8 @@ interface WorldMapGridProps {
   zoomSize: number;
   /** 图层开关：黄巾营地徽章 / 我的领地描边（流寇·商队由调用方控制 movingMarks） */
   layers?: { yt: boolean; mine: boolean };
+  /** 叠加层（领地边界 / 行军路线 / 书签，map/MapOverlay）：放在网格内，随拖曳一起平移 */
+  overlay?: ReactNode;
 }
 
 /** 拖曳会话（v23 AISLG-64；AISLG-102 重写为「理想原点」模型）：pointerdown 建立、move 换算理想原点、up 结束 */
@@ -73,7 +76,7 @@ const ARROW_DELTA: Record<string, [number, number]> = {
   ArrowRight: [1, 0],
 };
 
-export function WorldMapGrid({ win, selected, accountId, onSelect, onPan, onPanTo, panStep, territoryClusters, movingMarks, onZoom, zoomSize, layers }: WorldMapGridProps) {
+export function WorldMapGrid({ win, selected, accountId, onSelect, onPan, onPanTo, panStep, territoryClusters, movingMarks, onZoom, zoomSize, layers, overlay }: WorldMapGridProps) {
   const copy = useCopy();
   const { TILE_KIND_LABEL } = copy;
   const showYt = layers?.yt ?? true;
@@ -292,7 +295,7 @@ export function WorldMapGrid({ win, selected, accountId, onSelect, onPan, onPanT
       <div
         ref={gridRef}
         role="世界地图视野-网格"
-        className="grid h-full gap-[3px] will-change-transform"
+        className="relative grid h-full gap-[3px] will-change-transform"
         style={{
           gridTemplateColumns: `repeat(${win.w}, minmax(0, 1fr))`,
           gridTemplateRows: `repeat(${win.h}, minmax(0, 1fr))`,
@@ -314,14 +317,8 @@ export function WorldMapGrid({ win, selected, accountId, onSelect, onPan, onPanT
             const occupied = tile.kind === 'wilderness' && tile.owner !== null;
             // 连片领地（v23 AISLG-59）：本账号有连片加成的野地统一描金边
             const cluster = showMine ? territoryClusters?.get(`${x},${y}`) : undefined;
-            // 占领 / 本方城池：内描边 + 角旗；本方强调色、他方警示色（「我的领地」图层关闭时不描本方）
-            const ownership = cluster
-              ? 'ring-2 ring-inset ring-gold'
-              : (occupied || (tile.kind === 'city' && isOwn)) && (showMine || !isOwn)
-                ? isOwn
-                  ? 'ring-2 ring-inset ring-accent/80'
-                  : 'ring-2 ring-inset ring-warn/70'
-                : '';
+            // 占领 / 城池的归属边界由叠加层按片描外轮廓（本方强调色、他方警示色），格内只留角旗
+            const ownership = cluster ? 'ring-2 ring-inset ring-gold' : '';
             return (
               <button
                 key={`${x}-${y}`}
@@ -413,6 +410,7 @@ export function WorldMapGrid({ win, selected, accountId, onSelect, onPan, onPanT
             );
           }),
         )}
+        {overlay}
       </div>
 
       <WorldMapTooltip tip={tip} clusters={territoryClusters} />

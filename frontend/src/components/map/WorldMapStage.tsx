@@ -1,28 +1,40 @@
 /** 世界地图舞台：容器内铺满的格子网格（格数按容器尺寸算：列 = round(宽 / 44)、行 = round(高 / 44)，容器变化时重算）、
- *  黄巾之乱浮卡（点开看详情弹窗）与可收起的图例。数据与动作来自 worldSession，这里只负责量尺寸与组装。
+ *  黄巾之乱浮卡（点开看详情弹窗，可收成小胶囊）与可收起的图例（默认收起），两者的开合记在本地，避免长期遮挡地图格子。
+ *  数据与动作来自 worldSession，这里只负责量尺寸与组装。
  *  移动目标标记（v28 AISLG-78）：当前格打徽章、尚未走过的路线格打小点，随本地时钟推进。
+ *  叠加层（领地边界 / 行军路线 / 书签）与右下角小地图见 MapOverlay / MiniMap。
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { movingIndexAt, type CityView, type MovingTargetView, type YellowTurbanState } from '../../api/protocol';
+import { useEffect, useMemo, useRef } from 'react';
+import { movingIndexAt, type CityRefView, type CityView, type MovingTargetView, type YellowTurbanState } from '../../api/protocol';
 import { formatDurationText } from '../../api/format';
 import { useCopy } from '../../i18n/bundle';
+import type { MapBookmark } from '../../state/mapBookmarks';
 import type { MapLayers } from '../../state/NavContext';
+import { activeMarches } from '../../state/progressItems';
 import { viewportDims } from '../../state/mapZoom';
 import { useNow } from '../../state/useNow';
+import { useStoredFlag } from '../../state/useStoredFlag';
 import type { WorldSession } from '../../state/worldSession';
 import { WorldMapGrid } from '../WorldMapGrid';
 import { WorldMapLegend } from '../WorldMapLegend';
+import { MapOverlay, type RouteMarch } from './MapOverlay';
+import { MiniMap } from './MiniMap';
 
 /** 每次平移的格数（键盘越过边缘 / 方向键按钮） */
 export const PAN_STEP = 5;
 /** 容器尺寸变化后等多久再重算窗口（毫秒）：拖拽改窗口大小时不连发请求 */
 const RESIZE_DEBOUNCE_MS = 120;
+const LEGEND_KEY = 'slg.mapLegendOpen';
+const YT_COLLAPSED_KEY = 'slg.mapYtCollapsed';
 
 interface WorldMapStageProps {
   world: WorldSession;
   movingTargets: MovingTargetView[];
   city: CityView | null;
+  /** 本账号全部城池（行军出发点坐标、小地图城点） */
+  cities: CityRefView[];
+  bookmarks: MapBookmark[];
   accountId: string | null;
   layers: MapLayers;
   yellowTurban: YellowTurbanState | null;
@@ -31,12 +43,13 @@ interface WorldMapStageProps {
   onSelect: (x: number, y: number) => void;
 }
 
-export function WorldMapStage({ world, movingTargets, city, accountId, layers, yellowTurban, onOpenYellowTurban, onSelect }: WorldMapStageProps) {
+export function WorldMapStage({ world, movingTargets, city, cities, bookmarks, accountId, layers, yellowTurban, onOpenYellowTurban, onSelect }: WorldMapStageProps) {
   const copy = useCopy();
-  const { COPY, RESOURCE_LABEL, MAPUI_COPY, YT_COPY } = copy;
+  const { COPY, RESOURCE_LABEL, MAPUI_COPY, YT_COPY, UX_COPY } = copy;
   const boxRef = useRef<HTMLDivElement | null>(null);
-  // 图例默认展开，手机等窄屏默认收起（不遮地图）
-  const [legendOpen, setLegendOpen] = useState(() => window.innerWidth >= 1024);
+  // 图例与黄巾浮卡都会盖住格子：图例默认收起，开合状态记在本地
+  const [legendOpen, setLegendOpen] = useStoredFlag(LEGEND_KEY, false);
+  const [ytCollapsed, setYtCollapsed] = useStoredFlag(YT_COLLAPSED_KEY, false);
   const { resizeWindow, viewSize } = world;
   const win = world.window;
 
@@ -66,7 +79,14 @@ export function WorldMapStage({ world, movingTargets, city, accountId, layers, y
     };
   }, [resizeWindow, viewSize, win === null]);
 
-  const now = useNow(movingTargets.length > 0);
+  // 本城在途行军（叠加层画路线、小地图标目标）；出发点取城池列表里的坐标
+  const marching = city ? activeMarches(city) : [];
+  const routes: RouteMarch[] = marching.flatMap((march) => {
+    const from = cities.find((item) => item.id === march.fromCityId);
+    return from && from.x !== null && from.y !== null ? [{ march, from: { x: from.x, y: from.y } }] : [];
+  });
+
+  const now = useNow(movingTargets.length > 0 || marching.length > 0);
   const movingMarks = useMemo(() => {
     const marks = new Map<string, { kind: MovingTargetView['kind']; label: string; level: number; current: boolean }>();
     if (!layers.moving) {
@@ -121,6 +141,7 @@ export function WorldMapStage({ world, movingTargets, city, accountId, layers, y
             onZoom={world.zoomTo}
             zoomSize={viewSize}
             layers={layers}
+            overlay={<MapOverlay win={win} accountId={accountId} showMine={layers.mine} marches={routes} bookmarks={bookmarks} now={now} />}
           />
         </div>
       ) : (
@@ -130,25 +151,49 @@ export function WorldMapStage({ world, movingTargets, city, accountId, layers, y
       )}
 
       {ytActive && event ? (
-        <button
-          type="button"
-          role="世界地图视图-黄巾浮卡"
-          title={YT_COPY.panel.title}
-          onClick={onOpenYellowTurban}
-          className="absolute left-3.5 top-3.5 flex w-[220px] max-w-[60%] cursor-pointer flex-col gap-1 rounded-md border border-warn/50 bg-panel/90 px-2.5 py-1.5 text-left text-[11.5px]"
-        >
-          <b className="truncate text-warn">{YT_COPY.panel.title}</b>
-          <span className="block h-[3px] overflow-hidden rounded bg-line">
-            <i
-              className="block h-full bg-warn"
-              style={{ width: `${event.totalCamps > 0 ? Math.min(100, Math.round((event.clearedCamps / event.totalCamps) * 100)) : 0}%` }}
-            />
-          </span>
-          <span className="truncate text-dim">
-            {YT_COPY.panel.progress(event.clearedCamps, event.totalCamps)} ·{' '}
-            {YT_COPY.panel.endsIn(formatDurationText(Math.max(0, Math.ceil((Date.parse(event.endsAt) - ytNow) / 1000))))}
-          </span>
-        </button>
+        ytCollapsed ? (
+          <button
+            type="button"
+            role="世界地图视图-黄巾胶囊"
+            title={UX_COPY.map.expand}
+            onClick={() => setYtCollapsed(() => false)}
+            className="absolute left-3.5 top-3.5 cursor-pointer whitespace-nowrap rounded-full border border-warn/50 bg-panel/90 px-2 py-0.5 text-[11px] text-warn"
+          >
+            {YT_COPY.panel.title} {event.clearedCamps}/{event.totalCamps}
+          </button>
+        ) : (
+          <div role="世界地图视图-黄巾浮卡" className="absolute left-3.5 top-3.5 flex w-[220px] max-w-[60%] rounded-md border border-warn/50 bg-panel/90 text-[11.5px]">
+            <button
+              type="button"
+              role="世界地图视图-黄巾浮卡-详情"
+              title={YT_COPY.panel.title}
+              onClick={onOpenYellowTurban}
+              className="flex min-w-0 flex-1 cursor-pointer flex-col gap-1 px-2.5 py-1.5 text-left"
+            >
+              <b className="truncate text-warn">{YT_COPY.panel.title}</b>
+              <span className="block h-[3px] overflow-hidden rounded bg-line">
+                <i
+                  className="block h-full bg-warn"
+                  style={{ width: `${event.totalCamps > 0 ? Math.min(100, Math.round((event.clearedCamps / event.totalCamps) * 100)) : 0}%` }}
+                />
+              </span>
+              <span className="truncate text-dim">
+                {YT_COPY.panel.progress(event.clearedCamps, event.totalCamps)} ·{' '}
+                {YT_COPY.panel.endsIn(formatDurationText(Math.max(0, Math.ceil((Date.parse(event.endsAt) - ytNow) / 1000))))}
+              </span>
+            </button>
+            <button
+              type="button"
+              role="世界地图视图-黄巾浮卡-收起"
+              title={UX_COPY.map.collapse}
+              aria-label={UX_COPY.map.collapse}
+              onClick={() => setYtCollapsed(() => true)}
+              className="shrink-0 cursor-pointer self-start px-1.5 py-1 text-[12px] leading-none text-faint hover:text-fg"
+            >
+              –
+            </button>
+          </div>
+        )
       ) : null}
 
       {win ? (
@@ -170,6 +215,8 @@ export function WorldMapStage({ world, movingTargets, city, accountId, layers, y
           </button>
         </div>
       ) : null}
+
+      {win ? <MiniMap win={win} cities={cities} marches={marching} bookmarks={bookmarks} onJump={world.centerOn} /> : null}
     </div>
   );
 }

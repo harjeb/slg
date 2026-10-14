@@ -137,7 +137,7 @@ export function LoginPanel({ booting, loginBusy, loginError, lastUsername, onLog
                 onChange={(event) => setPassword(event.target.value)}
               />
             </label>
-            <button type="submit" className="btn px-3 py-1.5" role="账号面板-登录按钮" disabled={loginBusy}>
+            <button type="submit" className="btn btn-primary px-3 py-1.5 text-[12.5px]" role="账号面板-登录按钮" disabled={loginBusy}>
               {loginBusy ? COPY.login.busy : COPY.login.submit}
             </button>
           </form>

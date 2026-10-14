@@ -1,5 +1,5 @@
-/* 主题变量：与 frontend/prototypes/city-dark-themes.css 保持一致。
-   通过 <html data-theme="..."> 切换；新增皮肤 = 复制一个变量块。 */
+/* 主题变量：与 frontend/prototypes/city-dark-themes.css 保持一致（P1 视觉调整：dim / faint 文字提亮一档，加资源色与面板阴影）。
+   通过 <html data-theme="..."> 切换；新增皮肤 = 复制一个变量块；未覆盖的变量沿用 :root（暗夜）。 */
 
 :root,
 [data-theme='night'] {
@@ -9,8 +9,8 @@
   --line: #1e2733;
   --line-soft: #182030;
   --text: #d7dee8;
-  --text-dim: #7c8898;
-  --text-faint: #4d5866;
+  --text-dim: #8b97a8;
+  --text-faint: #5f6b7a;
   --accent: #2dd4bf;
   --accent-dim: #1b6e64;
   --accent-soft: rgba(45, 212, 191, 0.1);
@@ -28,6 +28,12 @@
   --t-lake: #12222b;
   --t-marsh: #1d1a26;
   --t-gold: #28220f;
+  /* 资源图标色（深色皮肤共用）与面板立体感：内高光 + 下沉阴影 */
+  --res-wood: #74b36c;
+  --res-food: #d9b85c;
+  --res-stone: #a3abb5;
+  --res-iron: #82a8cc;
+  --panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 6px 18px -10px rgba(0, 0, 0, 0.75);
 }
 
 [data-theme='crimson'] {
@@ -37,8 +43,8 @@
   --line: #332028;
   --line-soft: #291a20;
   --text: #e9dcd7;
-  --text-dim: #9c887f;
-  --text-faint: #6b534c;
+  --text-dim: #a8948b;
+  --text-faint: #7d655d;
   --accent: #e8564a;
   --accent-dim: #7e2f28;
   --accent-soft: rgba(232, 86, 74, 0.1);
@@ -65,8 +71,8 @@
   --line: #2e2718;
   --line-soft: #252014;
   --text: #e6dfcd;
-  --text-dim: #9a8f74;
-  --text-faint: #6b6248;
+  --text-dim: #a69b80;
+  --text-faint: #7d7358;
   --accent: #d9a441;
   --accent-dim: #7a5c1e;
   --accent-soft: rgba(217, 164, 65, 0.1);
@@ -93,8 +99,8 @@
   --line: #d9d0ba;
   --line-soft: #e4dcc8;
   --text: #33383f;
-  --text-dim: #7a7263;
-  --text-faint: #a89f8c;
+  --text-dim: #6e6658;
+  --text-faint: #938a76;
   --accent: #b03a2e;
   --accent-dim: #cf8577;
   --accent-soft: rgba(176, 58, 46, 0.08);
@@ -112,4 +118,9 @@
   --t-lake: #cfdfe3;
   --t-marsh: #dbd3dd;
   --t-gold: #eadfae;
+  --res-wood: #4f8a45;
+  --res-food: #a8831f;
+  --res-stone: #7b828b;
+  --res-iron: #4f7699;
+  --panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 4px 14px -8px rgba(90, 70, 30, 0.3);
 }

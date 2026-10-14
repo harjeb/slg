@@ -1,10 +1,11 @@
 /** 城内视图：15 座建筑按用途分三行（资源 / 内政 / 军事），每格固定的紧凑尺寸（不再撑满容器）= 简称 / 名字 / 等级或「未建」/ 一句效果；
- *  在建的有高亮并显示剩余时间，排队的描边，选中的高亮。点格子 = 选中建筑（城池页右侧出详情，在地图页「城内」视图则跳城池页）。
+ *  在建的有高亮并显示剩余时间，排队的描边，选中的高亮；资源足够且队列有空位时左上角打「▲」（可立即建造 / 升级）。
+ *  点格子 = 选中建筑（城池页右侧出详情，在地图页「城内」视图则跳城池页）。
  *  每种建筑同城唯一（v5），等级成长；在队冲突与队满的判断在详情区。
  */
 
 import { buildingEffectText } from '../../api/mapping';
-import { type BuildingKind, type CityView } from '../../api/protocol';
+import { BUILD_QUEUE_CAPACITY, BUILDING_LEVEL_MAX, type BuildingKind, type CityView, type Resources } from '../../api/protocol';
 // role 定位值取静态中文文案源（AISLG-137 约定：role 不随界面语言变）
 import { BUILDING_LABEL as BUILDING_LABEL_ZH } from '../../copy';
 import { useCopy } from '../../i18n/bundle';
@@ -20,6 +21,16 @@ export const KIND_GROUPS: Array<{ key: string; label: string; kinds: BuildingKin
 /** 全部建筑（按分组顺序） */
 export const KIND_ORDER: BuildingKind[] = KIND_GROUPS.flatMap((group) => group.kinds);
 
+/** 资源够、队列有空位、未满级且不在队中 → 可立即发起（消耗取服务端下发的 city.costs，与详情区同源） */
+function canStartNow(city: CityView, kind: BuildingKind): boolean {
+  const level = city.levels[kind] ?? 0;
+  if (level >= BUILDING_LEVEL_MAX || city.queue.length >= 1 + BUILD_QUEUE_CAPACITY || city.queue.some((item) => item.kind === kind)) {
+    return false;
+  }
+  const cost = level > 0 ? city.costs?.[kind]?.upgrade : city.costs?.[kind]?.build;
+  return cost != null && (Object.keys(cost) as (keyof Resources)[]).every((key) => city.resources[key] >= cost[key]);
+}
+
 interface CityGridProps {
   city: CityView | null;
   selected: BuildingKind | null;
@@ -28,7 +39,7 @@ interface CityGridProps {
 
 export function CityGrid({ city, selected, onPick }: CityGridProps) {
   const copy = useCopy();
-  const { BUILDING_LABEL, COPY, EXTRA_PANEL } = copy;
+  const { BUILDING_LABEL, COPY, EXTRA_PANEL, UX_COPY } = copy;
   const queue = city?.queue ?? [];
   const activeEntry = queue.find((item) => item.status === 'building') ?? null;
   // 到期时间由服务端给出；剩余秒数按本地时钟推进，完成与否以服务端推送 / 查询为准
@@ -48,6 +59,7 @@ export function CityGrid({ city, selected, onPick }: CityGridProps) {
               const entry = queue.find((item) => item.kind === kind);
               const active = entry?.status === 'building';
               const isSelected = selected === kind;
+              const ready = city !== null && canStartNow(city, kind);
               const tone = isSelected
                 ? 'border-accent bg-accent-soft text-accent'
                 : active
@@ -68,6 +80,15 @@ export function CityGrid({ city, selected, onPick }: CityGridProps) {
                   className={`relative flex h-[92px] short:h-[74px] min-w-0 max-sm:h-[66px] cursor-pointer flex-col items-center justify-center gap-0.5 overflow-hidden rounded-md border px-1 transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${tone}`}
                 >
                   {entry ? <i className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-gold" /> : null}
+                  {ready ? (
+                    <i
+                      role={`城内视图-建筑-${BUILDING_LABEL_ZH[kind].short}-可升级`}
+                      title={level > 0 ? UX_COPY.city.upgradable : UX_COPY.city.buildable}
+                      className="absolute left-1.5 top-1 text-[10px] not-italic leading-none text-ok"
+                    >
+                      ▲
+                    </i>
+                  ) : null}
                   <b className="text-[19px] font-semibold leading-none">{label.short}</b>
                   <span className="max-w-full truncate text-[12px]">{label.name}</span>
                   <span className={`font-mono text-[11px] ${active ? 'text-accent' : 'text-dim'}`}>

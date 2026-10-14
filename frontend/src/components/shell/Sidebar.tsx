@@ -1,5 +1,5 @@
-/** 侧栏（docs/frontend-nav-layout.md 第 3 节）：顶部城池切换（下拉，列出全部城池）、七个导航项（图标 + 名字 + 角标）、
- *  底部账号按钮（带本人连接状态灯；菜单：城池改名 / 切换账号 / 重置账号 / 皮肤四选一）。
+/** 侧栏（docs/frontend-nav-layout.md 第 3 节）：顶部城池切换（下拉，列出全部城池）、导航项（SVG 线性图标 + 名字 + 角标；当前页左侧强调竖条）、
+ *  底部账号按钮（带本人连接状态灯；菜单：城池改名 / 切换账号 / 重置账号 / 浏览器通知开关 / 皮肤四选一）。导航项悬停提示带数字快捷键。
  *  1024–1279 收成 60px 图标栏；< 1024 变底部图标栏（城池切换与集市 / 榜收进账号菜单）。
  */
 
@@ -8,14 +8,19 @@ import { useEffect, useRef, useState } from 'react';
 import { NAV_COPY as NAV_COPY_ZH } from '../../copy-ui';
 import { getCopy, useCopy, useLang } from '../../i18n/bundle';
 import { tName } from '../../i18n/names';
+import type { NotifyStatus } from '../../state/useBrowserNotify';
 import type { ConnectionStatus } from '../../state/useGameSession';
+import { shortcutKey } from '../../state/useNavShortcuts';
 import type { CityList } from '../../state/useCityList';
 import { PAGE_KEYS, type PageKey } from '../../state/usePage';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { ThemeSwitcher } from '../ThemeSwitcher';
+import { CityMenu } from './CityMenu';
+import { Icon } from '../ui/Icon';
 
-/** 各导航项的角标：count = 数字；hot = 红色（总览的 NPC 来袭） */
-export type NavBadges = Partial<Record<PageKey, { count: number; hot?: boolean }>>;
+/** 各导航项的角标：count = 数字；hot = 红色（总览的 NPC 来袭）；gold = 金色（有奖励可领）；
+ *  dot = 数字为 0 时显示提醒小点（如建造队列空闲）；title = 悬停说明 */
+export type NavBadges = Partial<Record<PageKey, { count: number; hot?: boolean; gold?: boolean; dot?: boolean; title?: string }>>;
 
 interface SidebarProps {
   page: PageKey;
@@ -38,6 +43,8 @@ interface SidebarProps {
   chatOpen: boolean;
   chatUnread: number;
   onToggleChat: () => void;
+  /** 浏览器通知开关（账号菜单一项；不支持 / 被拒时只显示状态） */
+  notify: { status: NotifyStatus; toggle: () => Promise<void> };
 }
 
 /** 连接状态灯样式与文字（文字用户可见，按当前语言取文案包，不能放模块常量） */
@@ -55,7 +62,7 @@ function connectionLamp(connection: ConnectionStatus): { lamp: string; label: st
 export function Sidebar(props: SidebarProps) {
   const copy = useCopy();
   const lang = useLang();
-  const { COPY, CITY_COPY, NAV_COPY, EXTRA_AUTH, CHAT_COPY } = copy;
+  const { COPY, CITY_COPY, NAV_COPY, EXTRA_AUTH, CHAT_COPY, UX_COPY } = copy;
   const { page, onNavigate, badges, cityList, switching, onSelectCity, account, connection, cityLoaded, chatOpen, chatUnread, onToggleChat } = props;
   const [cityOpen, setCityOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -114,7 +121,7 @@ export function Sidebar(props: SidebarProps) {
     <aside
       ref={rootRef}
       role="导航-侧栏"
-      className="relative flex min-h-0 flex-col gap-2 rounded-panel border border-line bg-panel p-2 [grid-area:side] max-lg:flex-row max-lg:items-stretch max-lg:gap-1 max-lg:p-1"
+      className="relative flex min-h-0 flex-col gap-2 rounded-panel border border-line bg-panel p-2 shadow-panel [grid-area:side] max-lg:flex-row max-lg:items-stretch max-lg:gap-1 max-lg:p-1"
     >
       <button
         type="button"
@@ -156,29 +163,33 @@ export function Sidebar(props: SidebarProps) {
               type="button"
               role={`导航-${NAV_COPY_ZH.pages[key].label}`}
               aria-current={on ? 'page' : undefined}
-              title={item.label}
+              title={UX_COPY.shortcuts.navHint(item.label, shortcutKey(key))}
               onClick={() => onNavigate(key)}
-              className={`relative flex min-w-0 cursor-pointer items-center gap-2.5 rounded-[5px] px-2.5 py-2 text-left text-[13px] max-xl:justify-center max-xl:px-0 max-lg:flex-1 max-lg:flex-col max-lg:gap-0.5 max-lg:px-0 max-lg:py-1 max-lg:text-[10.5px] ${
-                on ? 'bg-accent-soft text-accent' : 'text-dim hover:text-fg'
+              className={`relative flex min-w-0 cursor-pointer items-center gap-2.5 rounded-[5px] px-2.5 py-2 text-left text-[13px] transition-colors max-xl:justify-center max-xl:px-0 max-lg:flex-1 max-lg:flex-col max-lg:gap-0.5 max-lg:px-0 max-lg:py-1 max-lg:text-[9.5px] max-lg:tracking-tighter ${
+                on
+                  ? 'bg-accent-soft font-semibold text-accent before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-accent max-lg:before:hidden'
+                  : 'text-dim hover:bg-panel-2 hover:text-fg'
               }`}
             >
-              <b
-                className={`grid h-[22px] w-[22px] shrink-0 place-items-center rounded border text-[12px] font-semibold ${
-                  on ? 'border-accent-dim' : 'border-line'
-                }`}
-              >
-                {item.icon}
-              </b>
-              <span className="max-xl:hidden max-lg:inline">{item.label}</span>
+              <Icon name={key} size={18} />
+              <span className="max-w-full truncate whitespace-nowrap max-xl:hidden max-lg:inline">{item.label}</span>
               {badge && badge.count > 0 ? (
                 <i
                   role={`导航-${NAV_COPY_ZH.pages[key].label}-角标`}
+                  title={badge.title}
                   className={`ml-auto min-w-[18px] rounded-full px-1.5 text-center text-[10.5px] not-italic max-xl:absolute max-xl:right-0.5 max-xl:top-0.5 max-xl:ml-0 max-xl:min-w-[14px] max-xl:px-1 max-xl:text-[9px] max-lg:right-1.5 ${
-                    badge.hot ? 'bg-st-error text-bg' : 'bg-line text-fg'
+                    badge.hot ? 'bg-st-error text-bg' : badge.gold ? 'bg-gold text-bg' : 'bg-line text-fg'
                   }`}
                 >
                   {badge.count}
                 </i>
+              ) : badge?.dot ? (
+                <i
+                  role={`导航-${NAV_COPY_ZH.pages[key].label}-提醒点`}
+                  title={badge.title}
+                  aria-label={badge.title}
+                  className="ml-auto mr-1 h-2 w-2 shrink-0 rounded-full bg-gold max-xl:absolute max-xl:right-1.5 max-xl:top-1.5 max-xl:mr-0 max-xl:ml-0 max-lg:right-1.5 max-lg:top-0.5"
+                />
               ) : null}
             </button>
           );
@@ -190,12 +201,10 @@ export function Sidebar(props: SidebarProps) {
           aria-pressed={chatOpen}
           title={CHAT_COPY.launcher.label}
           onClick={onToggleChat}
-          className="relative hidden min-w-0 cursor-pointer flex-col items-center gap-0.5 rounded-[5px] px-0 py-1 text-[10.5px] text-dim hover:text-fg max-lg:flex max-lg:flex-1"
+          className={`relative hidden min-w-0 cursor-pointer flex-col items-center gap-0.5 rounded-[5px] px-0 py-1 text-[9.5px] tracking-tighter hover:text-fg max-lg:flex max-lg:flex-1 ${chatOpen ? 'text-accent' : 'text-dim'}`}
         >
-          <b className="grid h-[22px] w-[22px] shrink-0 place-items-center rounded border border-line text-[12px] font-semibold">
-            {CHAT_COPY.launcher.label.slice(0, 1)}
-          </b>
-          <span className="max-lg:inline">{CHAT_COPY.launcher.label}</span>
+          <Icon name="chat" size={18} />
+          <span className="max-w-full truncate whitespace-nowrap max-lg:inline">{CHAT_COPY.launcher.label}</span>
           {chatUnread > 0 ? (
             <i
               role="导航-聊天-角标"
@@ -251,6 +260,16 @@ export function Sidebar(props: SidebarProps) {
             {menuItem('账号菜单-账号设置', NAV_COPY.settings, props.onSettings)}
             {menuItem('账号菜单-切换账号', NAV_COPY.switchAccount, props.onSwitchAccount)}
             {menuItem('账号菜单-重置账号', NAV_COPY.reset, props.onReset, 'text-st-error')}
+            <button
+              type="button"
+              role="账号菜单-浏览器通知"
+              aria-pressed={props.notify.status === 'on'}
+              disabled={props.notify.status === 'unsupported' || props.notify.status === 'denied'}
+              onClick={() => void props.notify.toggle()}
+              className="w-full cursor-pointer rounded px-2.5 py-1.5 text-left text-[12.5px] hover:bg-accent-soft disabled:cursor-not-allowed disabled:text-faint disabled:hover:bg-transparent"
+            >
+              {UX_COPY.notify[props.notify.status === 'on' ? 'menuOn' : props.notify.status === 'off' ? 'menuOff' : props.notify.status]}
+            </button>
             <div className="hidden max-lg:block">
               {menuItem('账号菜单-集市', NAV_COPY.exchangeMobile, props.onExchange)}
               {menuItem('账号菜单-排行榜', NAV_COPY.leaderboardMobile, props.onLeaderboard)}
@@ -284,48 +303,5 @@ export function Sidebar(props: SidebarProps) {
         ) : null}
       </div>
     </aside>
-  );
-}
-
-/** 城池下拉：全部城池（名字 / 等级 / 主城·分城 / 坐标），当前城打勾，底部给分城名额 */
-function CityMenu({ cityList, onChoose, className }: { cityList: CityList; onChoose: (cityId: string) => void; className: string }) {
-  const copy = useCopy();
-  const { CITY_COPY, NAV_COPY } = copy;
-  const { cities, activeCityId, branch } = cityList;
-  return (
-    <div
-      role="导航-城池下拉"
-      className={`absolute z-30 flex min-w-[200px] max-w-[320px] flex-col rounded-md border border-line bg-panel-2 p-1 shadow-2xl ${className}`}
-    >
-      {cities.map((item) => {
-        const active = item.id === activeCityId;
-        return (
-          <button
-            key={item.id}
-            type="button"
-            role="城池下拉-城池"
-            title={CITY_COPY.switcher.tabTitle(tName(item.name), item.level, item.x, item.y)}
-            onClick={() => onChoose(item.id)}
-            className={`flex cursor-pointer items-baseline justify-between gap-3 rounded px-2.5 py-1.5 text-left text-[12.5px] hover:bg-accent-soft ${
-              active ? 'text-accent' : ''
-            }`}
-          >
-            <span className="min-w-0 truncate">
-              {active ? '✓ ' : ''}
-              {tName(item.name)}{' '}
-              <small className="text-faint">
-                {CITY_COPY.switcher.levelTag(item.level)} · {item.isMain ? NAV_COPY.cityMain : NAV_COPY.cityBranch}
-              </small>
-            </span>
-            <span className="shrink-0 font-mono text-[11px] text-faint">{item.x !== null && item.y !== null ? `${item.x},${item.y}` : ''}</span>
-          </button>
-        );
-      })}
-      {branch ? (
-        <p role="城池下拉-分城名额" title={CITY_COPY.switcher.branchLocked(branch.minGovernment)} className="border-t border-line-soft px-2.5 pt-1 text-[11px] text-faint">
-          {CITY_COPY.switcher.branchQuota(branch.count, branch.limit)}
-        </p>
-      ) : null}
-    </div>
   );
 }

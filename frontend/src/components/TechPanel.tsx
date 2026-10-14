@@ -1,6 +1,7 @@
 /** 科技卡（养成页右，v27 AISLG-77）：书院等级、六项科技（两列 3 行卡片：等级 / 当前效果 / 下一级成本·耗时·书院门槛 / 研究或取消）、
  *  进行中的研究（进度条 + 倒计时 + 取消）。科技账号共享、同一时间只研究一项；
- *  按钮禁用条件用 city 数据预判（书院 / 资源 / 已有研究），权威判定在服务端。卡片行文本都截断，悬停看全文。
+ *  按钮禁用条件用 city 数据预判（书院 / 资源 / 已有研究），权威判定在服务端。卡片行文本都截断，悬停看全文；
+ *  卡片矮时按容器高度依次藏「效果说明」「当前效果」「下一级」（index.css 的 .tech-card；下一级另在按钮悬停里）。
  */
 
 import { type CityView, type TechEntryView } from '../api/protocol';
@@ -42,28 +43,28 @@ function TechCard({ entry, city, researchBusy, researching, onResearch }: { entr
   return (
     <div
       role={`科技面板-条目-${entry.label}`}
-      className={`flex min-h-0 min-w-0 flex-col gap-0.5 overflow-hidden rounded-[5px] border px-2 py-1 ${researching ? 'border-accent-dim bg-accent-soft' : 'border-line-soft bg-panel-2'}`}
+      className={`tech-card flex min-h-0 min-w-0 flex-col gap-0.5 overflow-hidden rounded-[5px] border px-2 py-1 ${researching ? 'border-accent-dim bg-accent-soft' : 'border-line-soft bg-panel-2'}`}
     >
-      <div className="flex items-baseline justify-between gap-1">
+      <div className="flex shrink-0 items-baseline justify-between gap-1">
         <span className="min-w-0 truncate text-[13px] font-semibold">{label}</span>
         <span className="shrink-0 font-mono text-[11.5px] text-accent">{TECH_COPY.panel.levelTag(entry.level, entry.maxLevel)}</span>
       </div>
-      <p role="科技面板-当前效果" className="truncate font-mono text-[11.5px] text-dim" title={`${effect}\n${entry.effect}`}>
+      <p role="科技面板-当前效果" className="tech-card-effect shrink-0 truncate font-mono text-[11.5px] text-dim" title={`${effect}\n${entry.effect}`}>
         {effect}
       </p>
-      <p className="truncate text-[11px] text-faint" title={TECH_COPY.effectText[entry.kind] ?? entry.effect}>
+      <p role="科技面板-效果说明" className="tech-card-desc shrink-0 truncate text-[11px] text-faint" title={TECH_COPY.effectText[entry.kind] ?? entry.effect}>
         {TECH_COPY.effectText[entry.kind] ?? entry.effect}
       </p>
-      <p role="科技面板-下一级" className={`truncate text-[11px] ${lacking ? 'text-warn' : 'text-dim'}`} title={nextLine}>
+      <p role="科技面板-下一级" className={`tech-card-next shrink-0 truncate text-[11px] ${lacking ? 'text-warn' : 'text-dim'}`} title={nextLine}>
         {nextLine}
       </p>
-      <div className="mt-auto">
+      <div className="mt-auto shrink-0">
         {next ? (
           <button
             type="button"
             role="科技面板-研究按钮"
             disabled={blocked !== null}
-            title={blocked ?? undefined}
+            title={blocked ?? nextLine}
             onClick={onResearch}
             className="btn w-full truncate"
           >

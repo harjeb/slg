@@ -111,7 +111,7 @@ export interface GameSession {
   /** 取消排队中的建造条目（全额返还成本；在建条目不可取消） */
   cancelBuild: (buildId: string) => Promise<void>;
   /** 发起征兵（v11）：军营等级解锁兵种，发起时扣减资源与人口 */
-  startRecruit: (troop: TroopKind, count: number) => Promise<void>;
+  startRecruit: (troop: TroopKind, count: number) => Promise<boolean>;
   /** 取消排队中的征兵条目（v11，全额返还资源与人口；征募中条目不可取消） */
   cancelRecruit: (recruitId: string) => Promise<void>;
   /** 集市兑换（v22，AISLG-67 前端入口）：基础资源按 4:1 换金币；成功返回 null，失败返回人读错误 */

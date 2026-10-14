@@ -27,17 +27,18 @@ function field<T>(data: Record<string, unknown> | undefined, key: string): T | u
 }
 
 export function createRecruitActions(deps: RecruitActionsDeps): {
-  startRecruit: (troop: TroopKind, count: number) => Promise<void>;
+  /** 返回是否被服务端接受（界面据此清空表单） */
+  startRecruit: (troop: TroopKind, count: number) => Promise<boolean>;
   cancelRecruit: (recruitId: string) => Promise<void>;
 } {
   const { clientRef, setCity, setRecruitError, appendLocalEvent, scheduleSync } = deps;
 
   /** 发起征兵：成功乐观更新队列；失败展示人读错误并对齐响应附带的状态 */
-  const startRecruit = async (troop: TroopKind, count: number): Promise<void> => {
+  const startRecruit = async (troop: TroopKind, count: number): Promise<boolean> => {
     const { COPY, TROOP_LABEL, EXTRA_STATE } = getCopy();
     const client = clientRef.current;
     if (!client?.connected) {
-      return;
+      return false;
     }
     setRecruitError(null);
     const name = TROOP_LABEL[troop].name;
@@ -57,6 +58,7 @@ export function createRecruitActions(deps: RecruitActionsDeps): {
         // recruit_started / recruit_queued 推送只发给同账号其他连接，发起方拿不到；
         // 服务端已扣资源与人口，防抖走一轮按需查询对齐
         scheduleSync();
+        return true;
       } else {
         setRecruitError(recruitErrorText(res.error?.code, res.error?.message, res.data));
         const cityNow = field<CityView>(res.data, 'city');
@@ -64,9 +66,11 @@ export function createRecruitActions(deps: RecruitActionsDeps): {
           setCity(() => cityNow);
         }
         appendLocalEvent('player', COPY.session.recruitRejected(res.error?.message ?? EXTRA_STATE.state.rejectedFallback));
+        return false;
       }
     } catch (err) {
       setRecruitError(err instanceof Error ? err.message : COPY.session.recruitFailedFallback);
+      return false;
     }
   };
 

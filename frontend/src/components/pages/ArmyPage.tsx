@@ -25,7 +25,7 @@ export function ArmyPage() {
               city={session.city}
               connection={session.connection}
               recruitError={session.recruitError}
-              onStartRecruit={(troop, count) => void session.startRecruit(troop, count)}
+              onStartRecruit={session.startRecruit}
               onCancelRecruit={(id) => void session.cancelRecruit(id)}
             />
           ),

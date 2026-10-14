@@ -1,6 +1,7 @@
 /** 征兵卡（军队页左）：兵种表（兵种 + 克制标签 / 城内 / 在外 / 招募数量，未解锁的置灰并写解锁条件）、
  *  消耗 / 耗时 / 新增粮耗、招募按钮、征兵队列（≤3 条，含发起者标签与取消）。
- *  同一时间只招募一种：在某行输入数量即选中该行（其他行清空）。表单用镜像的 TROOP_INFO 预填消耗与禁用不可征兵种，权威判定在服务端。
+ *  同一时间只招募一种：在某行输入数量即选中该行（其他行清空）。「最大」按当前资源与人口填满所选兵种，招募被接受后清空表单。
+ *  表单用镜像的 TROOP_INFO 预填消耗与禁用不可征兵种，权威判定在服务端。
  */
 
 import { useState } from 'react';
@@ -18,13 +19,14 @@ interface RecruitPanelProps {
   city: CityView | null;
   connection: ConnectionStatus;
   recruitError: string | null;
-  onStartRecruit: (troop: TroopKind, count: number) => void;
+  /** 返回是否被服务端接受（接受后清空表单，避免误点重复招募） */
+  onStartRecruit: (troop: TroopKind, count: number) => Promise<boolean>;
   onCancelRecruit: (recruitId: string) => void;
 }
 
 export function RecruitPanel({ city, connection, recruitError, onStartRecruit, onCancelRecruit }: RecruitPanelProps) {
   const copy = useCopy();
-  const { ARMY_COPY, COPY, DEFENSE_COPY, IDENTITY_LABEL, TROOP_LABEL } = copy;
+  const { ARMY_COPY, COPY, DEFENSE_COPY, IDENTITY_LABEL, TROOP_LABEL, UX_COPY } = copy;
   const [troop, setTroop] = useState<TroopKind | null>(null);
   const [count, setCount] = useState(0);
   const queue = city?.recruitQueue ?? [];
@@ -48,6 +50,15 @@ export function RecruitPanel({ city, connection, recruitError, onStartRecruit, o
     : null;
   const popCost = info ? info.population * count : 0;
   const popShort = city !== null && city.population.current < popCost;
+  // 「最大」：当前资源、可用人口与单次上限共同决定的最多可招数量（只是预填，权威判定在服务端）
+  const maxCount =
+    info && city
+      ? Math.min(
+          RECRUIT_COUNT_MAX,
+          info.population > 0 ? Math.floor(city.population.current / info.population) : RECRUIT_COUNT_MAX,
+          ...(Object.keys(info.cost) as (keyof Resources)[]).filter((key) => info.cost[key] > 0).map((key) => Math.floor(city.resources[key] / info.cost[key])),
+        )
+      : 0;
   const submitDisabled = connection !== 'online' || city === null || troop === null || barracks === 0 || locked || queueFull || !validCount;
   const hint = city === null ? null : barracks === 0 ? COPY.recruitPanel.hintNoBarracks : queueFull ? COPY.recruitPanel.hintQueueFull : null;
 
@@ -109,14 +120,14 @@ export function RecruitPanel({ city, connection, recruitError, onStartRecruit, o
           <>
             <span className="text-faint">{COPY.recruitPanel.costLabel} </span>
             {costParts(totalCost, city.resources).map((part, index) => (
-              <span key={part.label} className={part.insufficient ? 'text-accent' : undefined}>
+              <span key={part.label} className={part.insufficient ? 'text-st-error' : undefined}>
                 {index > 0 ? ' · ' : ''}
                 {part.label} {part.value}
                 {part.insufficient ? COPY.recruitPanel.insufficient : ''}
               </span>
             ))}
             {' · '}
-            <span className={popShort ? 'text-accent' : undefined}>
+            <span className={popShort ? 'text-st-error' : undefined}>
               {COPY.recruitPanel.populationCost(popCost)}
               {popShort ? COPY.recruitPanel.insufficient : ''}
             </span>
@@ -127,16 +138,33 @@ export function RecruitPanel({ city, connection, recruitError, onStartRecruit, o
           <span className="font-sans text-faint">{hint ?? COPY.recruitPanel.formTitle}</span>
         )}
       </p>
-      <button
-        type="button"
-        role="征兵面板-提交"
-        className="btn shrink-0 py-1.5 text-[13px] font-semibold"
-        disabled={submitDisabled}
-        onClick={() => troop && onStartRecruit(troop, count)}
-      >
-        {ARMY_COPY.submit}
-        {troop && validCount ? ` ${TROOP_LABEL[troop].name} ×${count}` : ''}
-      </button>
+      <div role="征兵面板-操作" className="flex shrink-0 gap-1.5">
+        <button
+          type="button"
+          role="征兵面板-最大"
+          title={UX_COPY.fill.maxTitle}
+          className="btn shrink-0 px-3 py-1.5 text-[12.5px]"
+          disabled={troop === null || locked || maxCount < 1}
+          onClick={() => setCount(maxCount)}
+        >
+          {UX_COPY.fill.max}
+        </button>
+        <button
+          type="button"
+          role="征兵面板-提交"
+          className="btn btn-primary min-w-0 flex-1 py-1.5 text-[13px]"
+          disabled={submitDisabled}
+          onClick={async () => {
+            if (troop && (await onStartRecruit(troop, count))) {
+              setTroop(null);
+              setCount(0);
+            }
+          }}
+        >
+          {ARMY_COPY.submit}
+          {troop && validCount ? ` ${TROOP_LABEL[troop].name} ×${count}` : ''}
+        </button>
+      </div>
 
       <div role="征兵面板-队列" className="flex shrink-0 flex-col gap-1">
         <p className="text-[11.5px] text-faint">

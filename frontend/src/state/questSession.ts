@@ -39,6 +39,16 @@ export interface QuestSession {
   clear: () => void;
 }
 
+/** 各页签可领取数（签到未签也算日常的一项）：任务面板页签角标、导航角标与总览奖励入口共用 */
+export function questClaimable(session: Pick<QuestSession, 'quest' | 'quests' | 'activities'>): { daily: number; main: number; achv: number; act: number; total: number } {
+  const { quest, quests, activities } = session;
+  const daily = quest ? quest.daily.filter((t) => t.done && !t.claimed).length + (quest.signin.todaySigned ? 0 : 1) : 0;
+  const main = quests ? quests.main.steps.filter((s) => s.done && !s.claimed && s.unlocked).length : 0;
+  const achv = quests ? quests.achievements.reduce((n, a) => n + a.tiers.filter((t) => t.done && !t.claimed).length, 0) : 0;
+  const act = activities ? activities.reduce((n, a) => n + a.tiers.filter((t) => t.done && !t.claimed).length, 0) : 0;
+  return { daily, main, achv, act, total: daily + main + achv + act };
+}
+
 export function useQuestSession(deps: QuestSessionDeps): QuestSession {
   const { clientRef, connected, setCity } = deps;
   const [quest, setQuest] = useState<QuestStateView | null>(null);

@@ -1,4 +1,4 @@
-/** 顶栏资源条：金粮木石铁 + 人口六格。每格 = 存量、每小时净产量、离满仓百分比与细进度条；
+/** 顶栏资源条：金粮木石铁 + 人口六格。每格 = 彩色图标（≥1536 另带资源名，其余宽度名字在悬停说明里）、存量、每小时净产量、离满仓百分比与细进度条；
  *  ≥ 90% 警示色（仓库快满，超出上限的产出作废）。粮的净产量 = 毛产量 − 全军耗粮。
  */
 
@@ -7,6 +7,16 @@ import { compactNumber } from '../../api/format';
 // role 定位值取静态中文文案源（AISLG-137 约定：role 不随界面语言变）
 import { RESOURCE_LABEL as RESOURCE_LABEL_ZH } from '../../copy';
 import { useCopy } from '../../i18n/bundle';
+import { Icon } from '../ui/Icon';
+
+/** 资源图标色：金用主题金色，其余四种取主题的资源色 */
+const RESOURCE_TONE: Record<keyof Resources, string> = {
+  gold: 'text-gold',
+  wood: 'text-res-wood',
+  food: 'text-res-food',
+  stone: 'text-res-stone',
+  iron: 'text-res-iron',
+};
 
 /** 进度条警示线：docs 第 3 节「≥90% 变警示色」 */
 const ALERT_PERCENT = 90;
@@ -34,9 +44,10 @@ export function ResourceStrip({ city }: { city: CityView }) {
             title={title}
             className={`min-w-0 rounded-[5px] border bg-panel-2 px-2 pb-1 pt-0.5 ${warn ? 'border-warn/50' : 'border-line-soft'}`}
           >
-            <div className="flex items-baseline gap-1.5 whitespace-nowrap">
-              <span className="text-[11px] text-faint">{label}</span>
-              <span role={`顶栏-资源-${RESOURCE_LABEL_ZH[key]}-存量`} className="font-mono text-[13px] tabular-nums">
+            <div className="flex items-center gap-1.5 whitespace-nowrap">
+              <Icon name={key} size={14} className={RESOURCE_TONE[key]} />
+              <span className="hidden text-[11px] text-faint 2xl:inline">{label}</span>
+              <span role={`顶栏-资源-${RESOURCE_LABEL_ZH[key]}-存量`} className="font-mono text-[13px] font-medium tabular-nums">
                 {compactNumber(city.resources[key])}
               </span>
             </div>
@@ -68,9 +79,10 @@ function PopulationCell({ city }: { city: CityView }) {
       title={COPY.topbar.population(current, cap, growthPerHour)}
       className="min-w-0 rounded-[5px] border border-line-soft bg-panel-2 px-2 pb-1 pt-0.5"
     >
-      <div className="flex items-baseline gap-1.5 whitespace-nowrap">
-        <span className="text-[11px] text-faint">{TOP_COPY.popShort}</span>
-        <span className="font-mono text-[13px] tabular-nums">{compactNumber(current)}</span>
+      <div className="flex items-center gap-1.5 whitespace-nowrap">
+        <Icon name="population" size={14} className="text-dim" />
+        <span className="hidden text-[11px] text-faint 2xl:inline">{TOP_COPY.popShort}</span>
+        <span className="font-mono text-[13px] font-medium tabular-nums">{compactNumber(current)}</span>
       </div>
       <div className="flex items-baseline gap-1 whitespace-nowrap font-mono text-[10.5px] leading-tight tabular-nums text-faint">
         <span className="truncate">{TOP_COPY.popCap(cap)}</span>

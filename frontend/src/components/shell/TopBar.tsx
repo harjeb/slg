@@ -43,7 +43,7 @@ export function TopBar({ page, city, incoming, onOpenWarning, onOpenLeaderboard,
   return (
     <header
       role="导航-顶栏"
-      className="nav-top flex min-w-0 items-center gap-2 rounded-panel border border-line bg-panel px-2.5 py-1 max-lg:flex-wrap max-lg:gap-x-2 max-lg:gap-y-1.5 max-lg:py-1.5"
+      className="nav-top flex min-w-0 items-center gap-2 rounded-panel border border-line bg-panel shadow-panel px-2.5 py-1 max-lg:flex-wrap max-lg:gap-x-2 max-lg:gap-y-1.5 max-lg:py-1.5"
     >
       <h1 role="导航-页面标题" className="mx-1 min-w-14 shrink-0 whitespace-nowrap text-base font-semibold max-lg:w-auto">
         {NAV_COPY.pages[page].label}

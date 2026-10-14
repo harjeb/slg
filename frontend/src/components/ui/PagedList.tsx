@@ -1,11 +1,15 @@
 /** 分页列表：长列表不滚动，按容器可用高度算每页条数（AGENTS 前端规范 / docs/frontend-nav-layout.md 第 6 节）。
  *  做法：先只渲染第一条量真实行高 → 按列表区高度算每页条数；翻页器永远占位（量高之前就占好，否则会多算一行）；
  *  容器尺寸变化（ResizeObserver）时重算；渲染后若仍溢出（行高不一）逐条减少直至放下。
- *  只有一页时翻页器显示「共 N 条」。行内文本请自行 truncate，避免撑高行。
+ *  只有一页时翻页器显示「共 N 条」（没有条目时不显示，空态在列表区居中）。行内文本请自行 truncate，避免撑高行。
  */
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { useCopy } from '../../i18n/bundle';
+import { Icon } from './Icon';
+
+/** 空态区高度达到这个像素才配图标（矮的列表只放文字） */
+const EMPTY_ICON_MIN_HEIGHT = 120;
 
 interface PagedListProps<T> {
   /** 分页列表的 role 名（翻页器自动命名为「{role}-分页器」） */
@@ -47,6 +51,8 @@ export function PagedList<T>({
   /** 列表区高度变化计数：变了就重新测量 */
   const [heightTick, setHeightTick] = useState(0);
   const hasItems = items.length > 0;
+  /** 空态时列表区是否够高放图标 */
+  const [roomy, setRoomy] = useState(false);
 
   // 列表区尺寸变化 → 重新测量
   useEffect(() => {
@@ -68,6 +74,14 @@ export function PagedList<T>({
   // 条目从无到有 / 高度变化：回到测量态
   useLayoutEffect(() => {
     setPer(null);
+  }, [heightTick, hasItems]);
+
+  // 空态：按列表区高度决定要不要配图标
+  useLayoutEffect(() => {
+    const el = listRef.current;
+    if (!hasItems && el) {
+      setRoomy(el.clientHeight >= EMPTY_ICON_MIN_HEIGHT);
+    }
   }, [heightTick, hasItems]);
 
   // 测量态：第一条的真实行高 → 每页条数
@@ -106,13 +120,19 @@ export function PagedList<T>({
   return (
     <div role={role} className={`flex min-h-0 flex-1 flex-col ${className}`}>
       <div ref={listRef} className={`flex min-h-0 flex-1 flex-col overflow-hidden ${gapClass}`}>
-        {hasItems
-          ? visible.map((item, i) => <Row key={keyOf(item, current * size + i)}>{renderRow(item, current * size + i)}</Row>)
-          : empty}
+        {hasItems ? (
+          visible.map((item, i) => <Row key={keyOf(item, current * size + i)}>{renderRow(item, current * size + i)}</Row>)
+        ) : empty !== null ? (
+          // 空态在列表区垂直居中，够高时上方配一个淡色图标，避免大块卡片只有顶上一行小字
+          <div role={`${role}-空态`} className="flex min-h-0 flex-1 flex-col items-center justify-center text-faint">
+            {roomy ? <Icon name="empty" size={30} className="mb-1 opacity-60" /> : null}
+            {empty}
+          </div>
+        ) : null}
       </div>
       <div role={`${role}-分页器`} className="flex h-6 shrink-0 items-center justify-end gap-1.5 pt-1 text-[11.5px] text-faint">
         {pages <= 1 ? (
-          <span>{PAGED_COPY.total(items.length)}</span>
+          hasItems ? <span>{PAGED_COPY.total(items.length)}</span> : null
         ) : (
           <>
             <button

@@ -1,9 +1,10 @@
-/** 地图卡（地图页左侧）：图层开关（流寇·商队 / 黄巾 / 领地）、工具条（回主城 · 缩放 · 坐标跳转 · 平移）、
- *  世界地图舞台。格数按容器算。建筑相关的操作在城池页，这里只放世界地图。
+/** 地图卡（地图页左侧）：图层开关（流寇·商队 / 黄巾 / 领地）、工具条（回主城 · 书签 · 缩放 · 坐标跳转 · 平移）、
+ *  世界地图舞台（含叠加层与小地图）。书签状态在这里持有，工具条、叠加层、小地图共用。格数按容器算。建筑相关的操作在城池页，这里只放世界地图。
  */
 
 import { useCopy } from '../../i18n/bundle';
 import { useGame } from '../../state/GameContext';
+import { useMapBookmarks } from '../../state/mapBookmarks';
 import { useNav, type MapLayers } from '../../state/NavContext';
 // role 定位值取静态中文文案源（AISLG-137 约定：role 不随界面语言变）
 import { MAPUI_COPY as MAPUI_COPY_ZH } from '../../copy-pages';
@@ -21,6 +22,8 @@ export function MapCard({ role }: MapCardProps) {
   const { session, openYellowTurban } = useGame();
   const { layers, toggleLayer } = useNav();
   const world = session.world;
+  const bookmarks = useMapBookmarks();
+  const accountId = session.account?.accountId ?? null;
   // 图层开关文案随语言取（原先在模块顶层取静态中文包）；role 用第三列固定中文
   const LAYER_LABELS: Array<[keyof MapLayers, string, string]> = [
     ['moving', MAPUI_COPY.layerMoving, MAPUI_COPY_ZH.layerMoving],
@@ -44,12 +47,14 @@ export function MapCard({ role }: MapCardProps) {
         </div>
       }
     >
-      <MapToolbar world={world} />
+      <MapToolbar world={world} bookmarks={bookmarks} accountId={accountId} />
       <WorldMapStage
         world={world}
         movingTargets={session.moving.targets}
         city={session.city}
-        accountId={session.account?.accountId ?? null}
+        cities={session.cityList.cities}
+        bookmarks={bookmarks.list}
+        accountId={accountId}
         layers={layers}
         yellowTurban={session.yellowTurban.state}
         onOpenYellowTurban={openYellowTurban}

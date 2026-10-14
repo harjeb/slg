@@ -41,7 +41,14 @@
   --color-t-marsh: var(--t-marsh);
   --color-t-gold: var(--t-gold);
 
+  /* 资源图标色 */
+  --color-res-wood: var(--res-wood);
+  --color-res-food: var(--res-food);
+  --color-res-stone: var(--res-stone);
+  --color-res-iron: var(--res-iron);
+
   --radius-panel: 6px;
+  --shadow-panel: var(--panel-shadow);
   --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
 }
 
@@ -55,7 +62,8 @@
   }
 
   body {
-    background: var(--bg);
+    /* 左上角一抹主题色晕染，给大面积底色一点层次（随皮肤切换） */
+    background: radial-gradient(1100px 520px at 12% -12%, var(--accent-soft), transparent 70%), var(--bg);
     color: var(--text);
     font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
     font-size: 15px;
@@ -143,10 +151,31 @@
   }
 }
 
+/* 科技卡：高度由列表网格三行均分决定（与内容无关，可做尺寸容器）。放不下时依次藏效果说明、当前效果、下一级，
+   避免每行都被压扁成半行字；阈值 = 卡片内容区实测所需高度（标题 20.25 + 当前效果 17.25 + 两行各 16.5 + 按钮 26.5 + 间距 2）。 */
+.tech-card {
+  container-type: size;
+}
+@container (height < 105px) {
+  .tech-card-desc {
+    display: none;
+  }
+}
+@container (height < 86.5px) {
+  .tech-card-effect {
+    display: none;
+  }
+}
+@container (height < 67.5px) {
+  .tech-card-next {
+    display: none;
+  }
+}
+
 /* 重复出现的面板外壳与进度条，收成组件类，避免每个组件重复一长串工具类 */
 @layer components {
   .panel {
-    @apply rounded-panel border border-line bg-panel p-3;
+    @apply rounded-panel border border-line bg-panel p-3 shadow-panel;
   }
 
   .panel-head {
@@ -190,14 +219,31 @@
   }
 
   .btn {
-    @apply cursor-pointer rounded border border-accent-dim bg-transparent px-2 py-1 font-mono text-[10px] text-accent transition-colors;
+    @apply cursor-pointer rounded border border-accent-dim bg-transparent px-2 py-1 text-[11px] text-accent transition-colors;
   }
 
   .btn:hover:not(:disabled) {
-    @apply bg-accent-soft;
+    @apply border-accent bg-accent-soft;
+  }
+
+  .btn:focus-visible {
+    @apply outline-2 outline-offset-1 outline-accent;
   }
 
   .btn:disabled {
     @apply cursor-not-allowed border-line text-faint;
+  }
+
+  /* 主操作（每块卡片最多一个：招募 / 出征 / 建造 / 挑战 / 登录）：实心强调色，与地图详情区的确认大按钮同一风格 */
+  .btn-primary {
+    @apply border-accent bg-accent font-semibold text-bg;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    @apply border-accent bg-accent brightness-110;
+  }
+
+  .btn-primary:disabled {
+    @apply border-line bg-transparent font-normal text-faint;
   }
 }

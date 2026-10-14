@@ -8,7 +8,7 @@ import type { AchievementView, ActivityView, MainStepView } from '../api/protoco
 import { formatDate } from '../api/format';
 import { useCopy } from '../i18n/bundle';
 import { tName } from '../i18n/names';
-import type { QuestSession } from '../state/questSession';
+import { questClaimable, type QuestSession } from '../state/questSession';
 import { Card } from './ui/Card';
 
 /** 资源奖励的可读文本，如「金+1500 木+1500」 */
@@ -25,18 +25,14 @@ export function QuestPanel({ session }: { session: QuestSession }) {
   const copy = useCopy();
   const { QUEST_COPY } = copy;
   const [tab, setTab] = useState<Tab>('daily');
-  const { quest, quests, activities, error, refresh } = session;
+  const { error, refresh } = session;
 
   // 每次打开养成页重新拉取：动作完成后的进度不推送，靠挂载时拉一次对齐
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
-  const dailyClaimable = quest ? quest.daily.filter((t) => t.done && !t.claimed).length + (quest.signin.todaySigned ? 0 : 1) : 0;
-  const mainClaimable = quests ? quests.main.steps.filter((s) => s.done && !s.claimed && s.unlocked).length : 0;
-  const achvClaimable = quests ? quests.achievements.reduce((n, a) => n + a.tiers.filter((t) => t.done && !t.claimed).length, 0) : 0;
-  const actClaimable = activities ? activities.reduce((n, a) => n + a.tiers.filter((t) => t.done && !t.claimed).length, 0) : 0;
-  const totalClaimable = dailyClaimable + mainClaimable + achvClaimable + actClaimable;
+  const { daily: dailyClaimable, main: mainClaimable, achv: achvClaimable, act: actClaimable, total: totalClaimable } = questClaimable(session);
 
   const tabs: { key: Tab; label: string; badge: number }[] = [
     { key: 'daily', label: QUEST_COPY.tabs.daily, badge: dailyClaimable },

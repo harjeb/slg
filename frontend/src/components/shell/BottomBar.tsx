@@ -33,7 +33,7 @@ export function BottomBar({ city, research, broadcasts, onOpenBroadcasts }: Bott
   return (
     <footer
       role="导航-底栏"
-      className="nav-foot flex min-w-0 items-center gap-2.5 rounded-panel border border-line bg-panel px-2.5 text-[11.5px] max-lg:hidden"
+      className="nav-foot flex min-w-0 items-center gap-2.5 rounded-panel border border-line bg-panel shadow-panel px-2.5 text-[11.5px] max-lg:hidden"
     >
       <ChatChip />
       <span className="shrink-0 text-faint">{FOOT_COPY.running}</span>
