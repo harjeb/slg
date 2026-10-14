@@ -1,11 +1,11 @@
 # SLG Agent API 参考
 
-> 协议版本：**60** · 兼容策略：只加不改（见「版本与兼容」）
+> 协议版本：**63** · 兼容策略：只加不改（见「版本与兼容」）
 > 本文档由后端协议定义生成（`npm run gen:api-doc`），请勿手工编辑。
 > 运行中的服务提供同版本文档：`GET /agent-api.md`（本文件）与 `GET /agent-api.json`（机器可读清单）。
 > 给 Agent 的用法：把本文件（或 JSON 清单）连同服务器地址与你本账号的 Agent 令牌一起交给 Agent（你只给它令牌，不要给账号密码——Agent 不能密码登录）；它按第 1、2 节连接，用 LOGIN {token, asAgent: true} 登录（接入步骤见 op 1 的 Agent 提示），不要让它自行注册新账号。
 
-> **Agent 必读：保持文档最新（v32）**——服务端会持续更新。① 记住本文开头的协议版本号（当前 60）；② 每次 LOGIN 都在 data 里带上 `docVersion`（即该版本号），响应会返回服务端当前的 `protocolVersion`，文档落后时还会附 `docNotice`；③ 一旦落后，`GET /agent-api/changes/{你的版本号}` 获取此后每个版本的一句话变更（JSON），按需重新下载 `/agent-api.md` 全文，并更新你保存的版本号。每次服务端部署都会断开连接，重连登录时就能发现更新。协议只加不改，旧文档不会导致已有操作出错，只是用不上新功能。
+> **Agent 必读：保持文档最新（v32）**——服务端会持续更新。① 记住本文开头的协议版本号（当前 63）；② 每次 LOGIN 都在 data 里带上 `docVersion`（即该版本号），响应会返回服务端当前的 `protocolVersion`，文档落后时还会附 `docNotice`；③ 一旦落后，`GET /agent-api/changes/{你的版本号}` 获取此后每个版本的一句话变更（JSON），按需重新下载 `/agent-api.md` 全文，并更新你保存的版本号。每次服务端部署都会断开连接，重连登录时就能发现更新。协议只加不改，旧文档不会导致已有操作出错，只是用不上新功能。
 
 > **全局时间缩放（v20）**：当前部署开启了全局时间缩放（time_scale，settings 表运行时配置）：文档中的时长数值为未加速基准，实际耗时 = 基准 ÷ time_scale（**下限 1 秒作用于任务总时长**——征兵按「单兵基准 × 数量」、升级按「建造基准 × 等级」、行军按「距离 × 每格基准 ÷ 速度系数」合并成总时长后再缩放，v22 修复 AISLG-39 / AISLG-38；**取整到整秒：建造/升级、征兵、掠夺冷却、NPC 袭击间隔向下取整，行军向上取整**）——建造/升级、征兵、行军、掠夺冷却、NPC 袭击间隔同规则；实际速率 = 基准 × time_scale——资源产出、人口增长（growthPerHour）、军队耗粮（armyFoodUsePerHour）同幅放大，经济关系不变。只作用于新发起的任务与下一次结算（存量任务到期时间不变）。以响应内的 dueAt / production / growthPerHour 等实际下发值为准，不要按文档数值本地折算时长。
 
@@ -307,7 +307,8 @@
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "armyFoodUsePerHour": 0,
       "timeScale": 1,
@@ -440,7 +441,7 @@
     "role": "player",
     "sessionToken": "session-example-token-for-doc-0000000000000",
     "expiresAt": "2026-10-25T08:00:00.000Z",
-    "protocolVersion": 60,
+    "protocolVersion": 63,
     "docNotice": null
   }
 }
@@ -502,7 +503,7 @@
     "role": "player",
     "sessionToken": "session-example-token-for-doc-0000000000000",
     "expiresAt": "2026-10-25T08:00:00.000Z",
-    "protocolVersion": 60,
+    "protocolVersion": 63,
     "docNotice": null
   }
 }
@@ -522,7 +523,7 @@
 }
 ```
 
-**Agent 令牌登录并带上手上文档的版本（令牌永不过期、expiresAt 为 null；可顺带 agentModel 自报驱动模型，供模型榜分组；文档落后时响应附 docNotice，按提示 GET /agent-api/changes/57 补读增量）**
+**Agent 令牌登录并带上手上文档的版本（令牌永不过期、expiresAt 为 null；可顺带 agentModel 自报驱动模型，供模型榜分组；文档落后时响应附 docNotice，按提示 GET /agent-api/changes/60 补读增量）**
 
 请求：
 
@@ -533,7 +534,7 @@
   "data": {
     "token": "session-example-token-for-doc-0000000000000",
     "asAgent": true,
-    "docVersion": 57,
+    "docVersion": 60,
     "agentModel": "claude-opus-5-5"
   }
 }
@@ -552,8 +553,8 @@
     "role": "agent",
     "sessionToken": "session-example-token-for-doc-0000000000000",
     "expiresAt": null,
-    "protocolVersion": 60,
-    "docNotice": "接口文档已从 v57 更新到 v60：请 GET /agent-api/changes/57 查看增量变更，或重新下载 /agent-api.md（与本游戏服务同域名的 HTTPS 地址）。"
+    "protocolVersion": 63,
+    "docNotice": "接口文档已从 v60 更新到 v63：请 GET /agent-api/changes/60 查看增量变更，或重新下载 /agent-api.md（与本游戏服务同域名的 HTTPS 地址）。"
   }
 }
 ```
@@ -689,7 +690,7 @@
 | city.farms | number | **DEPRECATED（v3 遗留，勿用）**：兼容字段，= buildings.farm（0/1 已建标记）；等级请读 city.levels.farm。 |
 | city.production | object | 当前小时产量（v3 新增，v7 起含 gold）：{ gold, food, wood, stone, iron }；四种生产资源各含 100/小时的基础产量（无对应建筑也产出），建筑产量按等级叠加；金币由官府（100×等级/小时，v19）与占领金矿生产（无基础产量）。产量随建筑建成即时生效。 |
 | city.population | object | 人口现状（v7 新增，v8 规则确认，v19 数值修订）：{ current 当前人口, cap 上限（= 50 + 100 × 民房等级 × (民房等级 + 1)，无民房即基线 50）, growthPerHour 每小时增长（基准 = 10 × 民房等级 × (等级 + 1)，无民房为 0；实际 × 全局时间缩放） }；current ≥ cap 时停止增长（新号即 50/50 满编、增速 0，建民房后恢复增长）；征兵将消耗人口。 |
-| city.army | object | 城内驻军（v11 新增）：{ porter, militia, scout, pikeman, swordsman, archer, cavalry, iron_cavalry, supply_wagon, ballista, siege_ram }（后四种为 v33 二期兵种），按兵种统计；征兵完成（recruit_completed）时累加。 |
+| city.army | object | 城内驻军（v11 新增）：{ porter, militia, scout, pikeman, swordsman, archer, cavalry, iron_cavalry, supply_wagon, ballista, siege_ram, medic }（铁骑至冲车为 v33 二期兵种，medic 后勤兵为 v62），按兵种统计；征兵完成（recruit_completed）时累加。 |
 | city.armyFoodUsePerHour | number | 全军小时耗粮（v14 新增，实际值 × 全局时间缩放，与产出同幅）：城内驻军 1 倍 + 行军中/野地驻军 2 倍（单兵耗粮见各兵种 foodUse）。production.food 为毛产量，净粮 = production.food − 本值，可为负；结算把粮食扣到 0 为止、不记负债；**v34（AISLG-107）起断粮不再只是停止增长**：粮食为 0 且净产量为负时，每小时（缩放后）城内驻军每兵种减 10%（见 city.starveAt / city.mutinyNextAt 与 PUSH_STARVATION_STATE）。 |
 | city.starveAt | string \| null | 预计断粮时间（v34，AISLG-107；ISO 8601）：按当前粮食与净产量（粮毛产量 production.food − armyFoodUsePerHour）推算，已断粮 = 当前时刻，净产量不为负（不会断粮）为 null。距断粮不足 1 小时（缩放后）推送一次预警。 |
 | city.mutinyNextAt | string \| null | 下一次断粮哗变时刻（v34）：已断粮（粮食 0 且净产量为负）时有值——到点本城城内驻军每个兵种减 10%（向上取整、至少 1 个，在外部队不受影响、不强制召回）；否则 null。 |
@@ -1002,7 +1003,8 @@
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "armyFoodUsePerHour": 0,
       "timeScale": 1,
@@ -1317,7 +1319,8 @@
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "armyFoodUsePerHour": 0,
       "timeScale": 1,
@@ -1668,7 +1671,8 @@
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "armyFoodUsePerHour": 0,
       "timeScale": 1,
@@ -1726,7 +1730,7 @@
 | --- | --- | --- |
 | events | array | 事件数组，顺序见各游标说明。 |
 | events[].id | number | 事件自增 id，可作为 beforeId / sinceId 游标。 |
-| events[].type | string | 事件类型：'build_started' \| 'build_queued' \| 'build_completed' \| 'build_cancelled'（v7） \| 'recruit_started' \| 'recruit_queued' \| 'recruit_completed' \| 'recruit_cancelled'（v11） \| 'march_started' \| 'march_completed' \| 'wilderness_occupied' \| 'wilderness_lost' \| 'npc_city_occupied' \| 'npc_raid'（v12） \| 'city_renamed'（v7） \| 'account_reset'（v9，重置后事件流只剩这一条） \| 'agent_connected' \| 'agent_disconnected' \| 'resource_exchanged'（v22，集市兑换成交，detail = { resource, amount, gold, rate }） \| 'npc_attack_warning'（v23，NPC 袭击预警，detail = { x, y, target, terrain, level, armyMin, armyMax, arriveAt, attackId }） \| 'starvation_warning' / 'mutiny'（v34，断粮预警 / 哗变） \| 'hero_recruited' / 'hero_dismissed' / 'hero_arrears' / 'hero_wounded' / 'hero_level_up' / 'hero_granted' / 'guard_changed'（v36，AISLG-114/115/116，武将：招募 / 解雇 / 欠饷 / 重伤 / 升级 / 获得名将 / 城守任命）。 |
+| events[].type | string | 事件类型：'build_started' \| 'build_queued' \| 'build_completed' \| 'build_cancelled'（v7） \| 'recruit_started' \| 'recruit_queued' \| 'recruit_completed' \| 'recruit_cancelled'（v11） \| 'march_started' \| 'march_completed' \| 'dungeon_cleared'（v61，每次副本通关都会记录；detail = { dungeonId, dungeonName, runId, firstClear }，可用于任务 / 成就计数） \| 'wilderness_occupied' \| 'wilderness_lost' \| 'npc_city_occupied' \| 'npc_raid'（v12） \| 'city_renamed'（v7） \| 'account_reset'（v9，重置后事件流只剩这一条） \| 'agent_connected' \| 'agent_disconnected' \| 'resource_exchanged'（v22，集市兑换成交，detail = { resource, amount, gold, rate }） \| 'npc_attack_warning'（v23，NPC 袭击预警，detail = { x, y, target, terrain, level, armyMin, armyMax, arriveAt, attackId }） \| 'starvation_warning' / 'mutiny'（v34，断粮预警 / 哗变） \| 'hero_recruited' / 'hero_dismissed' / 'hero_arrears' / 'hero_wounded' / 'hero_level_up' / 'hero_granted' / 'guard_changed'（v36，AISLG-114/115/116，武将：招募 / 解雇 / 欠饷 / 重伤 / 升级 / 获得名将 / 城守任命）。 |
 | events[].initiator | 'player' \| 'agent' \| null | 发起事件的连接声明的登录类型。 |
 | events[].cityId | string \| null | 关联城池 id，无关联时为 null。 |
 | events[].buildId | string \| null | 关联建造 / 征兵 / 行军条目 id，无关联时为 null。 |
@@ -3040,7 +3044,8 @@
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "armyFoodUsePerHour": 0,
       "timeScale": 1,
@@ -3202,13 +3207,13 @@ Agent 连接上报自己的当前计划，供玩家的托管监控界面展示�
 
 `C→S` 请求-响应 · 需登录后发送
 
-在当前城池的军营征募士兵（v11）。每种兵有解锁所需的军营等级（未达返回 TROOP_NOT_AVAILABLE）与单兵成本；每次征募 1..100 人，成本 = 单兵成本 × 数量、人口 = 单兵人口 × 数量，**发起时立即扣减资源与人口**（取消排队条目时全额返还）。征兵队列独立于建造队列：无征募中时立即开始（status=recruiting，dueAt 为预计完成时间，时长 = max(1 秒, floor(单兵基准时长 × 数量 ÷ time_scale))——**1 秒下限作用于批次总时长**而非单兵，**结果向下取整到整秒**（v22 修复 AISLG-39，与建造/升级同模型；显式验证环境变量覆盖时不再缩放）），有征募中且排队未满（当前 2 条，占位）时入队，队满返回 RECRUIT_QUEUE_FULL。资源不足返回 INSUFFICIENT_RESOURCES（v22 起附 shortfall 缺口与 retryAfterSeconds——按当前净产量推导，等满后重发必然成功），人口不足返回 INSUFFICIENT_POPULATION（v22 起附 shortfall 与 retryAfterSeconds——按人口增速推导），失败响应附当前城池状态（**data 仅含 city，无 recruit 载荷**——客户端必须先判 ok 再取载荷）。玩家与 Agent 均可发起。当前兵种：民夫（porter，军营 Lv1）：金 50 / 木 30 / 粮 30，8s/人（基准，实际 ÷ 全局时间缩放），占 1 人口，负重 500，耗粮 2/h（基准，实际 × 缩放）；义兵（militia，军营 Lv1）：金 80 / 木 20 / 粮 50，10s/人（基准，实际 ÷ 全局时间缩放），占 1 人口，负重 60，耗粮 3/h（基准，实际 × 缩放）；斥候（scout，军营 Lv2）：金 100 / 木 50 / 粮 80，15s/人（基准，实际 ÷ 全局时间缩放），占 1 人口，负重 80，耗粮 4/h（基准，实际 × 缩放）；长枪兵（pikeman，军营 Lv3）：金 150 / 木 80 / 铁 50 / 粮 100，20s/人（基准，实际 ÷ 全局时间缩放），占 1 人口，负重 60，耗粮 5/h（基准，实际 × 缩放）；刀盾兵（swordsman，军营 Lv4）：金 180 / 木 60 / 铁 80 / 粮 120，25s/人（基准，实际 ÷ 全局时间缩放），占 1 人口，负重 80，耗粮 6/h（基准，实际 × 缩放）；弓箭兵（archer，军营 Lv5）：金 200 / 木 120 / 铁 60 / 粮 100，30s/人（基准，实际 ÷ 全局时间缩放），占 1 人口，负重 50，耗粮 6/h（基准，实际 × 缩放）；轻骑兵（cavalry，军营 Lv6）：金 300 / 木 80 / 铁 100 / 粮 150，40s/人（基准，实际 ÷ 全局时间缩放），占 1 人口，负重 100，耗粮 12/h（基准，实际 × 缩放）；铁骑兵（iron_cavalry，军营 Lv11）：金 600 / 木 100 / 铁 300 / 粮 200，60s/人（基准，实际 ÷ 全局时间缩放），占 3 人口，负重 100，耗粮 30/h（基准，实际 × 缩放）；辎重车（supply_wagon，军营 Lv3）：金 200 / 木 300 / 铁 40 / 粮 60，30s/人（基准，实际 ÷ 全局时间缩放），占 6 人口，负重 5000，耗粮 10/h（基准，实际 × 缩放）；床弩（ballista，军营 Lv7）：金 350 / 木 300 / 铁 120 / 粮 80，45s/人（基准，实际 ÷ 全局时间缩放），占 3 人口，负重 0，耗粮 8/h（基准，实际 × 缩放）；冲车（siege_ram，军营 Lv8）：金 400 / 木 400 / 铁 100 / 粮 80，60s/人（基准，实际 ÷ 全局时间缩放），占 5 人口，负重 0，耗粮 10/h（基准，实际 × 缩放）（均为占位数值）。军队耗粮已接入（v14）：单兵 foodUse 计入城池净产量，城内 1 倍、行军/野地驻军 2 倍（见 GET_STATE 的 armyFoodUsePerHour），断粮仅停止增长；战斗属性随战斗玩法设计。
+在当前城池的军营征募士兵（v11）。每种兵有解锁所需的军营等级（未达返回 TROOP_NOT_AVAILABLE）与单兵成本；每次征募 1..100 人，成本 = 单兵成本 × 数量、人口 = 单兵人口 × 数量，**发起时立即扣减资源与人口**（取消排队条目时全额返还）。征兵队列独立于建造队列：无征募中时立即开始（status=recruiting，dueAt 为预计完成时间，时长 = max(1 秒, floor(单兵基准时长 × 数量 ÷ time_scale))——**1 秒下限作用于批次总时长**而非单兵，**结果向下取整到整秒**（v22 修复 AISLG-39，与建造/升级同模型；显式验证环境变量覆盖时不再缩放）），有征募中且排队未满（当前 2 条，占位）时入队，队满返回 RECRUIT_QUEUE_FULL。资源不足返回 INSUFFICIENT_RESOURCES（v22 起附 shortfall 缺口与 retryAfterSeconds——按当前净产量推导，等满后重发必然成功），人口不足返回 INSUFFICIENT_POPULATION（v22 起附 shortfall 与 retryAfterSeconds——按人口增速推导），失败响应附当前城池状态（**data 仅含 city，无 recruit 载荷**——客户端必须先判 ok 再取载荷）。玩家与 Agent 均可发起。当前兵种：民夫（porter，军营 Lv1）：金 50 / 木 30 / 粮 30，8s/人（基准，实际 ÷ 全局时间缩放），占 1 人口，负重 500，耗粮 2/h（基准，实际 × 缩放）；义兵（militia，军营 Lv1）：金 80 / 木 20 / 粮 50，10s/人（基准，实际 ÷ 全局时间缩放），占 1 人口，负重 60，耗粮 3/h（基准，实际 × 缩放）；斥候（scout，军营 Lv2）：金 100 / 木 50 / 粮 80，15s/人（基准，实际 ÷ 全局时间缩放），占 1 人口，负重 80，耗粮 4/h（基准，实际 × 缩放）；长枪兵（pikeman，军营 Lv3）：金 150 / 木 80 / 铁 50 / 粮 100，20s/人（基准，实际 ÷ 全局时间缩放），占 1 人口，负重 60，耗粮 5/h（基准，实际 × 缩放）；刀盾兵（swordsman，军营 Lv4）：金 180 / 木 60 / 铁 80 / 粮 120，25s/人（基准，实际 ÷ 全局时间缩放），占 1 人口，负重 80，耗粮 6/h（基准，实际 × 缩放）；弓箭兵（archer，军营 Lv5）：金 200 / 木 120 / 铁 60 / 粮 100，30s/人（基准，实际 ÷ 全局时间缩放），占 1 人口，负重 50，耗粮 6/h（基准，实际 × 缩放）；轻骑兵（cavalry，军营 Lv6）：金 300 / 木 80 / 铁 100 / 粮 150，40s/人（基准，实际 ÷ 全局时间缩放），占 1 人口，负重 100，耗粮 12/h（基准，实际 × 缩放）；铁骑兵（iron_cavalry，军营 Lv11）：金 600 / 木 100 / 铁 300 / 粮 200，60s/人（基准，实际 ÷ 全局时间缩放），占 3 人口，负重 100，耗粮 30/h（基准，实际 × 缩放）；辎重车（supply_wagon，军营 Lv3）：金 200 / 木 300 / 铁 40 / 粮 60，30s/人（基准，实际 ÷ 全局时间缩放），占 6 人口，负重 5000，耗粮 10/h（基准，实际 × 缩放）；床弩（ballista，军营 Lv7）：金 350 / 木 300 / 铁 120 / 粮 80，45s/人（基准，实际 ÷ 全局时间缩放），占 3 人口，负重 0，耗粮 8/h（基准，实际 × 缩放）；冲车（siege_ram，军营 Lv8）：金 400 / 木 400 / 铁 100 / 粮 80，60s/人（基准，实际 ÷ 全局时间缩放），占 5 人口，负重 0，耗粮 10/h（基准，实际 × 缩放）；后勤兵（medic，军营 Lv3）：金 200 / 木 300 / 铁 40 / 粮 60，30s/人（基准，实际 ÷ 全局时间缩放），占 6 人口，负重 0，耗粮 10/h（基准，实际 × 缩放）（均为占位数值）。军队耗粮已接入（v14）：单兵 foodUse 计入城池净产量，城内 1 倍、行军/野地驻军 2 倍（见 GET_STATE 的 armyFoodUsePerHour），断粮仅停止增长；战斗属性随战斗玩法设计。
 
 **请求字段**
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| troop | 'porter' \| 'militia' \| 'scout' \| 'pikeman' \| 'swordsman' \| 'archer' \| 'cavalry' \| 'iron_cavalry' \| 'supply_wagon' \| 'ballista' \| 'siege_ram' | 必填。兵种（一期七种 + v33 二期四种：铁骑兵 iron_cavalry 军营 11 级 / 辎重车 supply_wagon 军营 3 级 / 床弩 ballista 军营 7 级 / 冲车 siege_ram 军营 8 级）；缺失或不是已知兵种返回 INVALID_PARAMS。 |
+| troop | 'porter' \| 'militia' \| 'scout' \| 'pikeman' \| 'swordsman' \| 'archer' \| 'cavalry' \| 'iron_cavalry' \| 'supply_wagon' \| 'ballista' \| 'siege_ram' \| 'medic' | 必填。兵种（一期七种 + v33 二期四种：铁骑兵 iron_cavalry 军营 11 级 / 辎重车 supply_wagon 军营 3 级 / 床弩 ballista 军营 7 级 / 冲车 siege_ram 军营 8 级；v62 后勤兵 medic 军营 3 级，零攻击与负重，仅提供副本波间救治，占位数值待校准）；缺失或不是已知兵种返回 INVALID_PARAMS。 |
 | count | number | 必填。征募数量，1..100 的整数（占位上限）；越界或非整数返回 INVALID_PARAMS。 |
 | cityId | string | 可选（v24，AISLG-58）。要操作的城池 id（GET_STATE 响应的 cities[].id）；缺省 = 主城（账号创建最早的城），旧客户端不受影响。非本账号名下的城或格式不对返回 INVALID_PARAMS。每座城的资源 / 人口 / 仓储 / 建造与征兵队列 / 驻军各自独立；出征、侦察从该城出发、扣减该城驻军。取消类协议（CANCEL_BUILD / CANCEL_RECRUIT）按条目所属城池定位，无需传 cityId。 |
 
@@ -3217,7 +3222,7 @@ Agent 连接上报自己的当前计划，供玩家的托管监控界面展示�
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | recruit.id | string | 本次征兵的 UUID（取消时用作 recruitId）。 |
-| recruit.troop | 'porter' \| 'militia' \| 'scout' \| 'pikeman' \| 'swordsman' \| 'archer' \| 'cavalry' \| 'iron_cavalry' \| 'supply_wagon' \| 'ballista' \| 'siege_ram' | 兵种，等于请求的 troop。 |
+| recruit.troop | 'porter' \| 'militia' \| 'scout' \| 'pikeman' \| 'swordsman' \| 'archer' \| 'cavalry' \| 'iron_cavalry' \| 'supply_wagon' \| 'ballista' \| 'siege_ram' \| 'medic' | 兵种，等于请求的 troop。 |
 | recruit.count | number | 征募数量。 |
 | recruit.status | 'recruiting' \| 'queued' \| 'completed' \| 'cancelled' | 发起时为 recruiting（立即开始）或 queued（排队）；完成推送为 completed；取消后为 cancelled。 |
 | recruit.initiator | 'player' \| 'agent' | 发起原始指令的连接声明的登录类型。 |
@@ -3750,7 +3755,8 @@ Agent 连接上报自己的当前计划，供玩家的托管监控界面展示�
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "purpose": "plunder",
       "status": "marching",
@@ -3810,7 +3816,8 @@ Agent 连接上报自己的当前计划，供玩家的托管监控界面展示�
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "purpose": "occupy",
       "status": "marching",
@@ -3870,7 +3877,8 @@ Agent 连接上报自己的当前计划，供玩家的托管监控界面展示�
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "purpose": "intercept",
       "status": "marching",
@@ -3934,7 +3942,8 @@ Agent 连接上报自己的当前计划，供玩家的托管监控界面展示�
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "purpose": "transport",
       "status": "marching",
@@ -4000,7 +4009,8 @@ Agent 连接上报自己的当前计划，供玩家的托管监控界面展示�
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "marches": [],
       "territory": []
@@ -4106,7 +4116,8 @@ Agent 连接上报自己的当前计划，供玩家的托管监控界面展示�
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "purpose": "return",
       "status": "marching",
@@ -4219,7 +4230,8 @@ Agent 连接上报自己的当前计划，供玩家的托管监控界面展示�
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "purpose": "scout",
       "status": "marching",
@@ -4391,7 +4403,8 @@ Agent 连接上报自己的当前计划，供玩家的托管监控界面展示�
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "purpose": "return",
       "status": "marching",
@@ -4515,7 +4528,8 @@ Agent 连接上报自己的当前计划，供玩家的托管监控界面展示�
             "iron_cavalry": 0,
             "supply_wagon": 0,
             "ballista": 0,
-            "siege_ram": 0
+            "siege_ram": 0,
+            "medic": 0
           },
           "losses": {
             "porter": 0,
@@ -4528,7 +4542,8 @@ Agent 连接上报自己的当前计划，供玩家的托管监控界面展示�
             "iron_cavalry": 0,
             "supply_wagon": 0,
             "ballista": 0,
-            "siege_ram": 0
+            "siege_ram": 0,
+            "medic": 0
           },
           "survivors": {
             "porter": 0,
@@ -4541,7 +4556,8 @@ Agent 连接上报自己的当前计划，供玩家的托管监控界面展示�
             "iron_cavalry": 0,
             "supply_wagon": 0,
             "ballista": 0,
-            "siege_ram": 0
+            "siege_ram": 0,
+            "medic": 0
           },
           "damage": 5090
         },
@@ -4558,7 +4574,8 @@ Agent 连接上报自己的当前计划，供玩家的托管监控界面展示�
             "iron_cavalry": 0,
             "supply_wagon": 0,
             "ballista": 0,
-            "siege_ram": 0
+            "siege_ram": 0,
+            "medic": 0
           },
           "losses": {
             "porter": 0,
@@ -4571,7 +4588,8 @@ Agent 连接上报自己的当前计划，供玩家的托管监控界面展示�
             "iron_cavalry": 0,
             "supply_wagon": 0,
             "ballista": 0,
-            "siege_ram": 0
+            "siege_ram": 0,
+            "medic": 0
           },
           "survivors": {
             "porter": 0,
@@ -4584,7 +4602,8 @@ Agent 连接上报自己的当前计划，供玩家的托管监控界面展示�
             "iron_cavalry": 0,
             "supply_wagon": 0,
             "ballista": 0,
-            "siege_ram": 0
+            "siege_ram": 0,
+            "medic": 0
           },
           "damage": 2926
         },
@@ -4970,8 +4989,8 @@ Agent 定期（建议每完成一批事或每小时）把「玩家不在时发�
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | broadcasts | array | 播报列表（新→旧）：{ id, type, detail, createdAt }。 |
-| broadcasts[].type | 'npc_city_emptied' \| 'gold_mine_first' \| 'city_broken' \| 'win_streak' \| 'yt_started' \| 'yt_grown' \| 'yt_boss' \| 'yt_boss_first_kill' \| 'yt_finished' \| 'hero_granted' \| 'city_conquered' \| 'arena_champion' \| 'star_tower_cleared' | 播报类型（yt_* 为 v29 黄巾之乱：起事 / 坐大 / 老巢出现 / 老巢首杀 / 收场；hero_granted 为 v36 获得名将；city_conquered 为 v40 分城易主；arena_champion 为 v53 竞技场登上第 1 名；star_tower_cleared 为 v55 将星塔 Boss 层首通；以上均必达、不受每分钟 3 条限频）。 |
-| broadcasts[].detail | object | 按类型解释：npc_city_emptied = { username, cityName, x, y, level }；gold_mine_first = { username, cityName, x, y }；city_broken = { username, cityName, x, y }；win_streak = { username, cityName, streak }；yt_started = { totalCamps, endsAt }；yt_grown = { count, tier, label }（count 个营地升到 tier 档）；yt_boss = { x, y }（老巢坐标）；yt_boss_first_kill = { username, cityName }；yt_finished = { reason: boss_cleared\|timeout, clearedCamps, totalCamps, scatteredCamps }（人名可能是玩家本人，也可能是其 Agent 打出的成绩——成绩记在账号上）；arena_champion = { username, previous }（username 登上第 1 名，previous 为被取代的原第 1 名，可能是守擂者）；star_tower_cleared = { username, floor }（floor 为刚首通的 Boss 层）。 |
+| broadcasts[].type | 'npc_city_emptied' \| 'gold_mine_first' \| 'city_broken' \| 'win_streak' \| 'yt_started' \| 'yt_grown' \| 'yt_boss' \| 'yt_boss_first_kill' \| 'yt_finished' \| 'hero_granted' \| 'city_conquered' \| 'arena_champion' \| 'star_tower_cleared' \| 'dungeon_cleared' | 播报类型（yt_* 为 v29 黄巾之乱：起事 / 坐大 / 老巢出现 / 老巢首杀 / 收场；hero_granted 为 v36 获得名将；city_conquered 为 v40 分城易主；arena_champion 为 v53 竞技场登上第 1 名；star_tower_cleared 为 v55 将星塔 Boss 层首通；dungeon_cleared 为 v61 玩家首次通关副本；以上均必达、不受每分钟 3 条限频）。 |
+| broadcasts[].detail | object | 按类型解释：npc_city_emptied = { username, cityName, x, y, level }；gold_mine_first = { username, cityName, x, y }；city_broken = { username, cityName, x, y }；win_streak = { username, cityName, streak }；yt_started = { totalCamps, endsAt }；yt_grown = { count, tier, label }（count 个营地升到 tier 档）；yt_boss = { x, y }（老巢坐标）；yt_boss_first_kill = { username, cityName }；yt_finished = { reason: boss_cleared\|timeout, clearedCamps, totalCamps, scatteredCamps }（人名可能是玩家本人，也可能是其 Agent 打出的成绩——成绩记在账号上）；arena_champion = { username, previous }（username 登上第 1 名，previous 为被取代的原第 1 名，可能是守擂者）；star_tower_cleared = { username, floor }（floor 为刚首通的 Boss 层）；dungeon_cleared = { username, dungeonId, dungeonName }。 |
 | broadcasts[].createdAt | string | 播报写入时间（ISO 8601）。 |
 
 **Agent 提示**：播报是全服氛围信息，与你的决策无强制关系；但「某 NPC 城被掠空」意味着那座城不再值得打，「首个占领金矿」意味着金矿红利已被拿走。别把播报当任务清单——玩家对打法的意图直接与玩家沟通确认。
@@ -6925,7 +6944,8 @@ Agent 定期（建议每完成一批事或每小时）把「玩家不在时发�
         "iron_cavalry": 14,
         "supply_wagon": 1,
         "ballista": 8,
-        "siege_ram": 3
+        "siege_ram": 3,
+        "medic": 1
       },
       "slots": 3,
       "dailyChallenges": 5,
@@ -7142,7 +7162,8 @@ Agent 定期（建议每完成一批事或每小时）把「玩家不在时发�
         "iron_cavalry": 14,
         "supply_wagon": 1,
         "ballista": 8,
-        "siege_ram": 3
+        "siege_ram": 3,
+        "medic": 1
       },
       "slots": 3,
       "dailyChallenges": 5,
@@ -8729,7 +8750,8 @@ Agent 定期（建议每完成一批事或每小时）把「玩家不在时发�
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "armyFoodUsePerHour": 0,
       "timeScale": 1,
@@ -9312,7 +9334,8 @@ Agent 定期（建议每完成一批事或每小时）把「玩家不在时发�
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "armyFoodUsePerHour": 0,
       "timeScale": 1,
@@ -9995,7 +10018,8 @@ Agent 定期（建议每完成一批事或每小时）把「玩家不在时发�
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "armyFoodUsePerHour": 0,
       "timeScale": 1,
@@ -10562,7 +10586,8 @@ Agent 定期（建议每完成一批事或每小时）把「玩家不在时发�
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "armyFoodUsePerHour": 0,
       "timeScale": 1,
@@ -11008,6 +11033,729 @@ Agent 定期（建议每完成一批事或每小时）把「玩家不在时发�
 }
 ```
 
+### op 99 · GET_DUNGEON — 查询副本
+
+`C→S` 请求-响应 · 需登录后发送
+
+（v61）返回全部副本（目前只有虎牢关）：入口坐标、规则参数、各波敌军（兵种数量 / 敌将属性与加成 / 是否攻城与城墙减伤 / 该波资源）、通关资源、宝物池、今日剩余次数、首通时刻与通关次数、进行中的挑战。副本是地图上的固定地点（地块 kind='dungeon'，普通出征 TARGET_NOT_ATTACKABLE）。用 ENTER_DUNGEON 派 1 名主将 + 最多 2 名副将、人口合计不超过 rules.popLimit（虎牢关 1000；铁骑 / 床弩 3、冲车 5、辎重车 / 后勤兵 6，其余 1）的真实部队，按正常行军时间前往；到达后一次性连续打 6 波（敌军阵容与敌将公开），每波的幸存兵数进入下一波，任意一波战败即终止，最后一波是攻城战（守方据城墙）。主将加成按现有规则（武力 / 智力、宝物、特长，统率超编摊薄；每波按当时部队规模重算）；所有兵合成一支部队，满额带兵数 = 主将统率（含兵书） × 20 + 每名副将基础统率 × 10。副将不单独带兵：各自的（武力加成 + 宝物攻击）× 25%、（智力加成 + 宝物减伤）× 25% 加到全军，合计各封顶 10%（不占主将的 20% 封顶，不摊薄）；副将的兵书统率、特长、坐骑速度与兵种专属装备效果不生效。后勤兵（medic）为医疗小队：打赢一波后（最后一波除外），每单位存活后勤兵救回至多 20 人口，单波合计不超过该波阵亡人口的 30%（按各兵种阵亡人口比例分配）；辎重车只负责运输，不救治。可选自动撤退：打赢一波后战斗兵人口（不含民夫 / 辎重车 / 后勤兵）低于出发时的 retreatBelowPercent% 就不再打下一波。结束后仅最终幸存部队返程，未被波间救回的阵亡永久损失，不返还伤兵；武将随部队返程（返程期间仍占用）。奖励：每打赢一波得该波资源；通关再得通关资源并判定宝物——首次通关必掉一件（宝物池等概率），之后每次通关按 rules.treasureChance。资源在结算时直接进出发城。每人每天 rules.dailyAttempts 次（北京日刷新），出发即扣，失败 / 撤退不退；同一副本同时只能有一支部队在路上；在路上可用 RECALL_MARCH 折返（本次取消，次数不退）。进出副本的行军不会被截击。
+
+**请求字段**
+
+无请求字段（`data` 可省略）。
+
+**响应 data 字段**
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| dungeons[].id / name / x / y | string / string / number / number | 副本 id（ENTER_DUNGEON 的 dungeonId）、名称与入口地块坐标（行军时长按到入口的距离算）。 |
+| dungeons[].rules | object | popLimit 人口上限、maxHeroes 武将上限（含主将）、dailyAttempts 每日次数、deputyShare 副将折算比例、deputyCapPercent 副将合计封顶、deputyLeadTroopsPerPoint 副将每点统率增加的满额带兵数、medicPopPerUnit 每单位后勤兵每波救回人口（v62）、medicPopPerWagon 已废弃且恒为 0（辎重车不救治）、medicMaxShare 单波救回占阵亡比例上限、woundedReturnShare 已废弃且恒为 0（v63 取消战后伤兵返还）、treasureChance 非首通掉宝物概率。 |
+| dungeons[].waves[] | object[] | wave 序号、name、general { name, lead, force, wit, atkPercent, defPercent }（敌将加成不摊薄）、troops 敌军、siege 是否攻城、wallDefensePercent 城墙减伤、reward 打赢该波的资源。 |
+| dungeons[].clearReward | Resources | 通关额外资源。 |
+| dungeons[].treasures | ItemDef[] | 宝物池（等概率）：def / name / category / effect / sellGold，字段同 GET_ITEMS。 |
+| dungeons[].attemptsLeft / firstClearedAt / clears | number / string \| null / number | 今日剩余次数、首通时刻（null = 还没通关过，下次通关必掉宝物）、累计通关次数。 |
+| dungeons[].active | DungeonRun \| null | 进行中（在路上）的挑战，字段同 GET_DUNGEON_REPORTS 的 reports[]（结果字段为 null）；没有为 null。 |
+
+**Agent 提示**：敌军全部公开，可先按各波兵种倾向配兵（第 3 波刀盾长枪克骑兵、第 5 波吕布铁骑、第 6 波据城墙）；单一兵种很难稳定通关。人口受限时应比较副将与后勤兵的作用；后勤兵挤占战斗人口，零攻击、零负重，仅在副本救治；辎重车只增加负重。新兵种数值待校准，不能把某个后勤兵数量视为固定最优。
+
+**示例**
+
+**查询副本（节选第 6 波）**
+
+请求：
+
+```json
+{
+  "op": 99,
+  "seq": 1
+}
+```
+
+成功响应：
+
+```json
+{
+  "op": 99,
+  "seq": 1,
+  "ok": true,
+  "data": {
+    "dungeons": [
+      {
+        "id": "hulao",
+        "name": "虎牢关",
+        "x": 72,
+        "y": 20,
+        "rules": {
+          "popLimit": 1000,
+          "maxHeroes": 3,
+          "dailyAttempts": 5,
+          "deputyShare": 0.25,
+          "deputyCapPercent": 10,
+          "deputyLeadTroopsPerPoint": 10,
+          "medicPopPerWagon": 0,
+          "medicPopPerUnit": 20,
+          "medicMaxShare": 0.3,
+          "woundedReturnShare": 0,
+          "treasureChance": 0.05
+        },
+        "waves": [
+          {
+            "wave": 6,
+            "name": "董卓",
+            "general": {
+              "name": "董卓",
+              "lead": 70,
+              "force": 40,
+              "wit": 60,
+              "atkPercent": 12,
+              "defPercent": 18
+            },
+            "troops": {
+              "swordsman": 100,
+              "archer": 90,
+              "ballista": 10
+            },
+            "siege": true,
+            "wallDefensePercent": 30,
+            "reward": {
+              "gold": 1000,
+              "wood": 1500,
+              "food": 1500,
+              "stone": 1500,
+              "iron": 1500
+            }
+          }
+        ],
+        "clearReward": {
+          "gold": 1000,
+          "wood": 1500,
+          "food": 1500,
+          "stone": 1500,
+          "iron": 1500
+        },
+        "treasures": [
+          {
+            "def": "qixing_blade",
+            "name": "七星宝刀",
+            "category": "weapon",
+            "effect": {
+              "atkPercent": 5
+            },
+            "sellGold": 2000
+          }
+        ],
+        "attemptsLeft": 5,
+        "firstClearedAt": null,
+        "clears": 0,
+        "active": null
+      }
+    ]
+  }
+}
+```
+
+### op 100 · ENTER_DUNGEON — 出征副本
+
+`C→S` 请求-响应 · 需登录后发送
+
+（v61）从出发城（可选 cityId，缺省主城）派部队与武将去副本入口：校验通过后扣城内驻军、扣一次次数、创建行军（purpose='dungeon'，与 MARCH 的行军视图相同，受校场在外部队数上限约束），到达由服务端连续结算并推送 PUSH_DUNGEON_STATE。行军速度按编队最慢兵种，吃行军科技与主将坐骑加成。副本是地图上的固定地点（地块 kind='dungeon'，普通出征 TARGET_NOT_ATTACKABLE）。用 ENTER_DUNGEON 派 1 名主将 + 最多 2 名副将、人口合计不超过 rules.popLimit（虎牢关 1000；铁骑 / 床弩 3、冲车 5、辎重车 / 后勤兵 6，其余 1）的真实部队，按正常行军时间前往；到达后一次性连续打 6 波（敌军阵容与敌将公开），每波的幸存兵数进入下一波，任意一波战败即终止，最后一波是攻城战（守方据城墙）。主将加成按现有规则（武力 / 智力、宝物、特长，统率超编摊薄；每波按当时部队规模重算）；所有兵合成一支部队，满额带兵数 = 主将统率（含兵书） × 20 + 每名副将基础统率 × 10。副将不单独带兵：各自的（武力加成 + 宝物攻击）× 25%、（智力加成 + 宝物减伤）× 25% 加到全军，合计各封顶 10%（不占主将的 20% 封顶，不摊薄）；副将的兵书统率、特长、坐骑速度与兵种专属装备效果不生效。后勤兵（medic）为医疗小队：打赢一波后（最后一波除外），每单位存活后勤兵救回至多 20 人口，单波合计不超过该波阵亡人口的 30%（按各兵种阵亡人口比例分配）；辎重车只负责运输，不救治。可选自动撤退：打赢一波后战斗兵人口（不含民夫 / 辎重车 / 后勤兵）低于出发时的 retreatBelowPercent% 就不再打下一波。结束后仅最终幸存部队返程，未被波间救回的阵亡永久损失，不返还伤兵；武将随部队返程（返程期间仍占用）。奖励：每打赢一波得该波资源；通关再得通关资源并判定宝物——首次通关必掉一件（宝物池等概率），之后每次通关按 rules.treasureChance。资源在结算时直接进出发城。每人每天 rules.dailyAttempts 次（北京日刷新），出发即扣，失败 / 撤退不退；同一副本同时只能有一支部队在路上；在路上可用 RECALL_MARCH 折返（本次取消，次数不退）。进出副本的行军不会被截击。
+
+**请求字段**
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| dungeonId | string | 必填。GET_DUNGEON 的 dungeons[].id，如 hulao。 |
+| mainHeroId | string | 必填。主将 id。武将须在家：不在随军（含副将）/ 历练 / 重伤 / 欠饷，也不在任城守。 |
+| deputyHeroIds | string[] | 可选。副将 id，最多 2 名，不能与主将重复；要求同主将。 |
+| troops | Partial<ArmyCounts> | 必填。部队（兵种 → 数量，非负整数），人口合计不超过 rules.popLimit，且至少有 1 名战斗兵；不超过出发城驻军。 |
+| retreatBelowPercent | number | 可选，1–99。打赢一波后战斗兵人口低于出发时的该百分比就撤退（不再打下一波）；缺省不撤退。 |
+| cityId | string | 可选。出发城 id，缺省主城。 |
+
+**响应 data 字段**
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| march | MarchView | 出征行军（purpose='dungeon'，heroId 为主将），字段同 MARCH 响应。 |
+| run | DungeonRun | 本次挑战记录（status=marching，结果字段为 null），字段同 GET_DUNGEON_REPORTS 的 reports[]。 |
+| attemptsLeft | number | 扣次数后的今日剩余次数。 |
+
+**可能错误**：`INVALID_PARAMS`、`DUNGEON_NO_ATTEMPTS`、`DUNGEON_POP_LIMIT`、`DUNGEON_HERO_LIMIT`、`DUNGEON_IN_PROGRESS`、`INSUFFICIENT_TROOPS`、`DEPLOY_LIMIT`、`HERO_NOT_FOUND`、`HERO_BUSY`、`HERO_TRAINING`、`HERO_WOUNDED`、`HERO_ARREARS`、`GUARD_ASSIGN_DENIED`（处置建议见第 4 节）
+
+**Agent 提示**：出发即扣次数，失败不退；先用 GET_DUNGEON 看剩余次数与敌军。到达后不能再干预，想止损就设 retreatBelowPercent。结算结果以 PUSH_DUNGEON_STATE 或 GET_DUNGEON_REPORTS 为准；最终幸存部队随返程行军回城后才回到驻军。
+
+**示例**
+
+**主将 + 1 副将，带 2 小队后勤兵，兵力低于 20% 撤退**
+
+请求：
+
+```json
+{
+  "op": 100,
+  "seq": 2,
+  "data": {
+    "dungeonId": "hulao",
+    "mainHeroId": "6b1f3c2e-9a0d-4f7e-8b21-3d5c7e9f1a20",
+    "deputyHeroIds": [
+      "7c2a4d3f-0b1e-4a8f-9c32-4e6d8f0a2b31"
+    ],
+    "troops": {
+      "swordsman": 300,
+      "pikeman": 300,
+      "archer": 250,
+      "cavalry": 88,
+      "medic": 2
+    },
+    "retreatBelowPercent": 20
+  }
+}
+```
+
+成功响应：
+
+```json
+{
+  "op": 100,
+  "seq": 2,
+  "ok": true,
+  "data": {
+    "march": {
+      "id": "0f8a2c1e-4b7d-4e2a-9c31-7d5e8f1a2b40",
+      "fromCityId": "3a9d2f1c-5e7b-4c8a-9d10-2b4c6e8f0a12",
+      "x": 72,
+      "y": 20,
+      "troops": {
+        "porter": 0,
+        "militia": 0,
+        "scout": 0,
+        "pikeman": 300,
+        "swordsman": 300,
+        "archer": 250,
+        "cavalry": 88,
+        "iron_cavalry": 0,
+        "supply_wagon": 0,
+        "ballista": 0,
+        "siege_ram": 0,
+        "medic": 2
+      },
+      "purpose": "dungeon",
+      "status": "marching",
+      "initiator": "player",
+      "startedAt": "2026-10-14T08:00:00.000Z",
+      "arriveAt": "2026-10-14T08:20:00.000Z",
+      "resolvedAt": null,
+      "targetId": null,
+      "cargo": null,
+      "ambushAt": null,
+      "heroId": "6b1f3c2e-9a0d-4f7e-8b21-3d5c7e9f1a20"
+    },
+    "run": {
+      "id": 12,
+      "dungeonId": "hulao",
+      "dungeonName": "虎牢关",
+      "status": "marching",
+      "createdAt": "2026-10-14T08:00:00.000Z",
+      "resolvedAt": null,
+      "marchId": "0f8a2c1e-4b7d-4e2a-9c31-7d5e8f1a2b40",
+      "returnMarchId": null,
+      "heroes": [
+        {
+          "role": "main",
+          "id": "6b1f3c2e-9a0d-4f7e-8b21-3d5c7e9f1a20",
+          "name": "张辽",
+          "lead": 52,
+          "force": 50,
+          "wit": 45,
+          "specialty": null,
+          "equipment": "qixing_blade"
+        },
+        {
+          "role": "deputy",
+          "id": "7c2a4d3f-0b1e-4a8f-9c32-4e6d8f0a2b31",
+          "name": "李典",
+          "lead": 40,
+          "force": 40,
+          "wit": 35,
+          "specialty": "infantry",
+          "equipment": null
+        }
+      ],
+      "troops": {
+        "swordsman": 300,
+        "pikeman": 300,
+        "archer": 250,
+        "cavalry": 88,
+        "medic": 2
+      },
+      "retreatBelowPercent": 20,
+      "outcome": null,
+      "wavesWon": null,
+      "waves": null,
+      "survivors": null,
+      "woundedReturned": null,
+      "returning": null,
+      "rewards": null,
+      "treasure": null,
+      "firstClear": null,
+      "heroExp": null
+    },
+    "attemptsLeft": 4
+  }
+}
+```
+
+**人口超限**
+
+请求：
+
+```json
+{
+  "op": 100,
+  "seq": 3,
+  "data": {
+    "dungeonId": "hulao",
+    "mainHeroId": "6b1f3c2e-9a0d-4f7e-8b21-3d5c7e9f1a20",
+    "troops": {
+      "swordsman": 1001
+    }
+  }
+}
+```
+
+失败响应（`DUNGEON_POP_LIMIT`）：
+
+```json
+{
+  "op": 100,
+  "seq": 3,
+  "ok": false,
+  "error": {
+    "code": "DUNGEON_POP_LIMIT",
+    "message": "部队人口超过副本上限"
+  }
+}
+```
+
+### op 101 · GET_DUNGEON_REPORTS — 查询副本战报
+
+`C→S` 请求-响应 · 需登录后发送
+
+（v61）我的副本挑战记录，按时间倒序分页（含在路上的）；每人保留最近 50 条已结算的。结算后的记录给出每一波的双方兵力与伤亡、救治、生效加成，以及返程兵力、资源、宝物、武将经验。
+
+**请求字段**
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| limit | number | 可选，1–50，缺省 20。 |
+| beforeId | number | 可选。只返回 id 小于它的更早记录（翻页游标）。 |
+
+**响应 data 字段**
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| reports[] | DungeonRun | id、dungeonId、dungeonName、status（marching 在路上 / resolved 已结算 / cancelled 在路上用 RECALL_MARCH 折返、次数不退）、createdAt、resolvedAt、marchId、returnMarchId（返程行军 id，尚未返程为 null；全灭后武将仍需返程）、heroes[]（role main / deputy、属性、特长、宝物 equipment）、troops 出发兵力、retreatBelowPercent；结算后：outcome（cleared 通关 / defeated 战败 / retreated 撤退）、wavesWon、waves[]（每波 troops / losses / survivors / enemyTroops / enemyLosses / healed 救回 / bonus 主将与副将加成 / rounds / endReason）、survivors 结束时幸存、woundedReturned 兼容旧战报（v63 起新结算恒为空编队）、returning 返程兵力（v63 起等于 survivors）、rewards 资源（逐波 + 通关，已进出发城）、treasure 掉落宝物或 null、firstClear 是否首通、heroExp 每名武将各得经验。未结算时这些字段为 null。 |
+| hasMore | boolean | 是否还有更早的记录。 |
+
+**可能错误**：`INVALID_PARAMS`（处置建议见第 4 节）
+
+**示例**
+
+**首通掉落西凉大宛马（节选第 1 波）**
+
+请求：
+
+```json
+{
+  "op": 101,
+  "seq": 4,
+  "data": {
+    "limit": 1
+  }
+}
+```
+
+成功响应：
+
+```json
+{
+  "op": 101,
+  "seq": 4,
+  "ok": true,
+  "data": {
+    "reports": [
+      {
+        "id": 12,
+        "dungeonId": "hulao",
+        "dungeonName": "虎牢关",
+        "status": "resolved",
+        "createdAt": "2026-10-14T08:00:00.000Z",
+        "resolvedAt": "2026-10-14T08:20:00.000Z",
+        "marchId": "0f8a2c1e-4b7d-4e2a-9c31-7d5e8f1a2b40",
+        "returnMarchId": "1f8a2c1e-4b7d-4e2a-9c31-7d5e8f1a2b41",
+        "heroes": [
+          {
+            "role": "main",
+            "id": "6b1f3c2e-9a0d-4f7e-8b21-3d5c7e9f1a20",
+            "name": "张辽",
+            "lead": 52,
+            "force": 50,
+            "wit": 45,
+            "specialty": null,
+            "equipment": "qixing_blade"
+          },
+          {
+            "role": "deputy",
+            "id": "7c2a4d3f-0b1e-4a8f-9c32-4e6d8f0a2b31",
+            "name": "李典",
+            "lead": 40,
+            "force": 40,
+            "wit": 35,
+            "specialty": "infantry",
+            "equipment": null
+          }
+        ],
+        "troops": {
+          "swordsman": 300,
+          "pikeman": 300,
+          "archer": 250,
+          "cavalry": 88,
+          "medic": 2
+        },
+        "retreatBelowPercent": 20,
+        "outcome": "cleared",
+        "wavesWon": 6,
+        "waves": [
+          {
+            "wave": 1,
+            "name": "西凉先锋",
+            "won": true,
+            "rounds": 9,
+            "endReason": "defender_wiped",
+            "troops": {
+              "swordsman": 300,
+              "pikeman": 300,
+              "archer": 250,
+              "cavalry": 88,
+              "medic": 2
+            },
+            "losses": {
+              "swordsman": 31,
+              "pikeman": 22,
+              "archer": 9,
+              "cavalry": 15
+            },
+            "survivors": {
+              "swordsman": 269,
+              "pikeman": 278,
+              "archer": 241,
+              "cavalry": 73,
+              "medic": 2
+            },
+            "enemyTroops": {
+              "militia": 500,
+              "cavalry": 150
+            },
+            "enemyLosses": {
+              "militia": 500,
+              "cavalry": 150
+            },
+            "healed": {
+              "swordsman": 6,
+              "pikeman": 5,
+              "archer": 2,
+              "cavalry": 2
+            },
+            "bonus": {
+              "mainAtkPercent": 20,
+              "mainDefPercent": 13.5,
+              "deputyAtkPercent": 3,
+              "deputyDefPercent": 2.6,
+              "scale": 1
+            }
+          }
+        ],
+        "survivors": {
+          "swordsman": 120,
+          "pikeman": 61,
+          "archer": 40,
+          "cavalry": 12
+        },
+        "woundedReturned": {},
+        "returning": {
+          "swordsman": 120,
+          "pikeman": 61,
+          "archer": 40,
+          "cavalry": 12
+        },
+        "rewards": {
+          "gold": 4100,
+          "wood": 6100,
+          "food": 6100,
+          "stone": 6100,
+          "iron": 6100
+        },
+        "treasure": {
+          "def": "dawan_horse",
+          "name": "西凉大宛马",
+          "category": "mount",
+          "effect": {
+            "marchSpeedPercent": 15,
+            "troopBonuses": {
+              "cavalry": {
+                "defPercent": 3
+              },
+              "iron_cavalry": {
+                "defPercent": 3
+              }
+            }
+          },
+          "sellGold": 2000
+        },
+        "firstClear": true,
+        "heroExp": 7380
+      }
+    ],
+    "hasMore": true
+  }
+}
+```
+
+### op 102 · GET_ITEMS — 查询背包
+
+`C→S` 请求-响应 · 需登录后发送
+
+（v61）返回我的全部宝物（含已装备的），按获得先后。每名武将（名将、普通将都有）1 个宝物槽，武器 / 坐骑 / 兵书都装进同一个槽，一将同时只装 1 件。宝物效果：atkPercent 所带部队攻击 +%、defPercent 受到伤害 −%（不计入武力 / 智力加成的 20% 封顶，单件各不超过 10%，与武将加成一样随统率超编摊薄）、lead 统率 +N（提高满额带兵数，竞技场 / 将星塔里也提高系统标准兵数）、marchSpeedPercent 随行行军速度 +%（只看带队主将，与行军科技等加成相加）、troopBonuses 按兵种生效的攻击 / 减伤（大宛马只给骑兵 / 铁骑减伤 3%，不会变成全军减伤）。所有战斗都生效（大地图出征 / 守城、竞技场、将星塔、副本）；在副本里当副将时只按副将规则折算全局攻击 / 减伤，兵书统率、坐骑速度与兵种专属装备效果不生效。随军（含副本副将）或历练中的武将不能更换宝物；武将被解雇时宝物自动回背包。宝物不能分解，只能把背包里（未装备）的卖给系统换固定金币（进主城）。当前宝物：七星宝刀（qixing_blade，weapon）、西凉大宛马（dawan_horse，mount）、董卓兵书（dongzhuo_book，book），来自副本掉落。
+
+**请求字段**
+
+无请求字段（`data` 可省略）。
+
+**响应 data 字段**
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| items[] | Item[] | id 实例 id、def 定义 id、name、category（weapon / mount / book）、effect { atkPercent?, defPercent?, lead?, marchSpeedPercent?, troopBonuses?: { 兵种: { atkPercent?, defPercent? } } }、sellGold 出售价、heroId 装在哪名武将身上（null = 在背包）、source 来源、acquiredAt。 |
+
+**示例**
+
+**一件装在武将身上的宝物**
+
+请求：
+
+```json
+{
+  "op": 102,
+  "seq": 1
+}
+```
+
+成功响应：
+
+```json
+{
+  "op": 102,
+  "seq": 1,
+  "ok": true,
+  "data": {
+    "items": [
+      {
+        "id": "9d3e5f4a-1c2b-4d6e-8f70-5a7b9c1d3e52",
+        "def": "qixing_blade",
+        "name": "七星宝刀",
+        "category": "weapon",
+        "effect": {
+          "atkPercent": 5
+        },
+        "sellGold": 2000,
+        "heroId": "6b1f3c2e-9a0d-4f7e-8b21-3d5c7e9f1a20",
+        "source": "dungeon:hulao",
+        "acquiredAt": "2026-10-14T08:20:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+### op 103 · EQUIP_ITEM — 装备宝物
+
+`C→S` 请求-响应 · 需登录后发送
+
+（v61）把宝物装到武将的宝物槽：武将原有的宝物回背包；宝物原来装在别的武将身上则从那名武将卸下（两名武将都须在家、不在历练）。已经装在该武将身上视为成功。成功后 HeroView.equipment 与 bonus 随之变化。
+
+**请求字段**
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| itemId | string | 必填。宝物实例 id（GET_ITEMS 的 items[].id）。 |
+| heroId | string | 必填。武将 id。 |
+
+**响应 data 字段**
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| items[] | Item[] | id 实例 id、def 定义 id、name、category（weapon / mount / book）、effect { atkPercent?, defPercent?, lead?, marchSpeedPercent?, troopBonuses?: { 兵种: { atkPercent?, defPercent? } } }、sellGold 出售价、heroId 装在哪名武将身上（null = 在背包）、source 来源、acquiredAt。 |
+
+**可能错误**：`INVALID_PARAMS`、`ITEM_NOT_FOUND`、`HERO_NOT_FOUND`、`HERO_BUSY`、`HERO_TRAINING`（处置建议见第 4 节）
+
+**示例**
+
+**给张辽装上七星宝刀**
+
+请求：
+
+```json
+{
+  "op": 103,
+  "seq": 2,
+  "data": {
+    "itemId": "9d3e5f4a-1c2b-4d6e-8f70-5a7b9c1d3e52",
+    "heroId": "6b1f3c2e-9a0d-4f7e-8b21-3d5c7e9f1a20"
+  }
+}
+```
+
+成功响应：
+
+```json
+{
+  "op": 103,
+  "seq": 2,
+  "ok": true,
+  "data": {
+    "items": [
+      {
+        "id": "9d3e5f4a-1c2b-4d6e-8f70-5a7b9c1d3e52",
+        "def": "qixing_blade",
+        "name": "七星宝刀",
+        "category": "weapon",
+        "effect": {
+          "atkPercent": 5
+        },
+        "sellGold": 2000,
+        "heroId": "6b1f3c2e-9a0d-4f7e-8b21-3d5c7e9f1a20",
+        "source": "dungeon:hulao",
+        "acquiredAt": "2026-10-14T08:20:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+### op 104 · UNEQUIP_ITEM — 卸下宝物
+
+`C→S` 请求-响应 · 需登录后发送
+
+（v61）把宝物从武将身上卸回背包（武将须在家、不在历练）；本来就在背包视为成功。
+
+**请求字段**
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| itemId | string | 必填。宝物实例 id。 |
+
+**响应 data 字段**
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| items[] | Item[] | id 实例 id、def 定义 id、name、category（weapon / mount / book）、effect { atkPercent?, defPercent?, lead?, marchSpeedPercent?, troopBonuses?: { 兵种: { atkPercent?, defPercent? } } }、sellGold 出售价、heroId 装在哪名武将身上（null = 在背包）、source 来源、acquiredAt。 |
+
+**可能错误**：`INVALID_PARAMS`、`ITEM_NOT_FOUND`、`HERO_BUSY`、`HERO_TRAINING`（处置建议见第 4 节）
+
+**示例**
+
+**卸下七星宝刀**
+
+请求：
+
+```json
+{
+  "op": 104,
+  "seq": 3,
+  "data": {
+    "itemId": "9d3e5f4a-1c2b-4d6e-8f70-5a7b9c1d3e52"
+  }
+}
+```
+
+成功响应：
+
+```json
+{
+  "op": 104,
+  "seq": 3,
+  "ok": true,
+  "data": {
+    "items": [
+      {
+        "id": "9d3e5f4a-1c2b-4d6e-8f70-5a7b9c1d3e52",
+        "def": "qixing_blade",
+        "name": "七星宝刀",
+        "category": "weapon",
+        "effect": {
+          "atkPercent": 5
+        },
+        "sellGold": 2000,
+        "heroId": null,
+        "source": "dungeon:hulao",
+        "acquiredAt": "2026-10-14T08:20:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+### op 105 · SELL_ITEM — 出售宝物
+
+`C→S` 请求-响应 · 需登录后发送
+
+（v61）把背包里（未装备）的宝物卖给系统，按 sellGold 固定价换金币进主城（不受仓库上限钳制）；宝物不能分解。装着的先 UNEQUIP_ITEM。
+
+**请求字段**
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| itemId | string | 必填。宝物实例 id。 |
+
+**响应 data 字段**
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| gold | number | 得到的金币（已进主城）。 |
+| items[] | Item[] | id 实例 id、def 定义 id、name、category（weapon / mount / book）、effect { atkPercent?, defPercent?, lead?, marchSpeedPercent?, troopBonuses?: { 兵种: { atkPercent?, defPercent? } } }、sellGold 出售价、heroId 装在哪名武将身上（null = 在背包）、source 来源、acquiredAt。 |
+
+**可能错误**：`INVALID_PARAMS`、`ITEM_NOT_FOUND`、`ITEM_EQUIPPED`（处置建议见第 4 节）
+
+**Agent 提示**：同名宝物可以有多件，但一将只能装一件，多余的只能卖钱。
+
+**示例**
+
+**卖掉一把重复的七星宝刀**
+
+请求：
+
+```json
+{
+  "op": 105,
+  "seq": 4,
+  "data": {
+    "itemId": "9d3e5f4a-1c2b-4d6e-8f70-5a7b9c1d3e52"
+  }
+}
+```
+
+成功响应：
+
+```json
+{
+  "op": 105,
+  "seq": 4,
+  "ok": true,
+  "data": {
+    "gold": 2000,
+    "items": []
+  }
+}
+```
+
 ### op 2000 · PUSH_BUILD_STATE — 推送：建筑建造状态变化
 
 `S→C` 服务端推送 · 无 `seq`
@@ -11360,7 +12108,8 @@ Agent 定期（建议每完成一批事或每小时）把「玩家不在时发�
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "purpose": "plunder",
       "status": "marching",
@@ -11401,7 +12150,8 @@ Agent 定期（建议每完成一批事或每小时）把「玩家不在时发�
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "purpose": "plunder",
       "status": "arrived",
@@ -11506,7 +12256,8 @@ Agent 定期（建议每完成一批事或每小时）把「玩家不在时发�
           "iron_cavalry": 0,
           "supply_wagon": 0,
           "ballista": 0,
-          "siege_ram": 0
+          "siege_ram": 0,
+          "medic": 0
         },
         "losses": {
           "porter": 0,
@@ -11519,7 +12270,8 @@ Agent 定期（建议每完成一批事或每小时）把「玩家不在时发�
           "iron_cavalry": 0,
           "supply_wagon": 0,
           "ballista": 0,
-          "siege_ram": 0
+          "siege_ram": 0,
+          "medic": 0
         },
         "survivors": {
           "porter": 0,
@@ -11532,7 +12284,8 @@ Agent 定期（建议每完成一批事或每小时）把「玩家不在时发�
           "iron_cavalry": 0,
           "supply_wagon": 0,
           "ballista": 0,
-          "siege_ram": 0
+          "siege_ram": 0,
+          "medic": 0
         },
         "damage": 5090
       },
@@ -11549,7 +12302,8 @@ Agent 定期（建议每完成一批事或每小时）把「玩家不在时发�
           "iron_cavalry": 0,
           "supply_wagon": 0,
           "ballista": 0,
-          "siege_ram": 0
+          "siege_ram": 0,
+          "medic": 0
         },
         "losses": {
           "porter": 0,
@@ -11562,7 +12316,8 @@ Agent 定期（建议每完成一批事或每小时）把「玩家不在时发�
           "iron_cavalry": 0,
           "supply_wagon": 0,
           "ballista": 0,
-          "siege_ram": 0
+          "siege_ram": 0,
+          "medic": 0
         },
         "survivors": {
           "porter": 0,
@@ -11575,7 +12330,8 @@ Agent 定期（建议每完成一批事或每小时）把「玩家不在时发�
           "iron_cavalry": 0,
           "supply_wagon": 0,
           "ballista": 0,
-          "siege_ram": 0
+          "siege_ram": 0,
+          "medic": 0
         },
         "damage": 2926
       },
@@ -11953,7 +12709,7 @@ NPC 出兵后不再立刻结算：先给被袭击账号发预警（预警提前�
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| reason | string | recruited / dismissed / guard_changed / arrears / salary_paid / wounded / exp_gained / granted / training_started / training_done（历练结束、经验已到账）/ points_changed（加点或洗点）/ gifted（赏赐）/ friendship_changed（结交进度）。 |
+| reason | string | recruited / dismissed / guard_changed / arrears / salary_paid / wounded / exp_gained / granted / training_started / training_done（历练结束、经验已到账）/ points_changed（加点或洗点）/ gifted（赏赐）/ friendship_changed（结交进度）/ equipment_changed（v61 宝物穿戴或卸下，heroId 为穿戴的武将，卸下时为 null）。 |
 | heroId | string | 涉及的武将 id（guard_changed 撤任时可能为 null）。 |
 | exp | object | reason=exp_gained 时给出 { gained 本次经验, level, leveledTo 升到几级或 null }。 |
 
@@ -12260,6 +13016,166 @@ NPC 出兵后不再立刻结算：先给被袭击账号发预警（预警提前�
 }
 ```
 
+### op 2023 · PUSH_DUNGEON_STATE — 推送：副本挑战状态变化（v61）
+
+`S→C` 服务端推送 · 无 `seq`
+
+出发、到达入口、连续结算、返程回城或取消时推给该账号全部在线连接（含 Agent）。run 是推送时读取的当前记录，arrived 与 resolved 可能来自同一事务、携带相同的已结算记录；按 reason 区分阶段。仅 resolved 表示结算结果、资源与宝物已入账；returned 表示兵将回城（另有 PUSH_MARCH_STATE）。
+
+**data 字段**
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| reason | string | started 出发 / arrived 到达 / resolved 结算 / returned 回城 / cancelled 取消（次数不退）。 |
+| run | DungeonRun | 当前挑战记录，字段同 GET_DUNGEON_REPORTS 的 reports[]。 |
+
+**Agent 提示**：推送可能漏收，以 GET_DUNGEON_REPORTS 为准。
+
+**示例**
+
+推送（`resolved`）：
+
+```json
+{
+  "op": 2023,
+  "push": true,
+  "data": {
+    "reason": "resolved",
+    "run": {
+      "id": 12,
+      "dungeonId": "hulao",
+      "dungeonName": "虎牢关",
+      "status": "resolved",
+      "createdAt": "2026-10-14T08:00:00.000Z",
+      "resolvedAt": "2026-10-14T08:20:00.000Z",
+      "marchId": "0f8a2c1e-4b7d-4e2a-9c31-7d5e8f1a2b40",
+      "returnMarchId": "1f8a2c1e-4b7d-4e2a-9c31-7d5e8f1a2b41",
+      "heroes": [
+        {
+          "role": "main",
+          "id": "6b1f3c2e-9a0d-4f7e-8b21-3d5c7e9f1a20",
+          "name": "张辽",
+          "lead": 52,
+          "force": 50,
+          "wit": 45,
+          "specialty": null,
+          "equipment": "qixing_blade"
+        },
+        {
+          "role": "deputy",
+          "id": "7c2a4d3f-0b1e-4a8f-9c32-4e6d8f0a2b31",
+          "name": "李典",
+          "lead": 40,
+          "force": 40,
+          "wit": 35,
+          "specialty": "infantry",
+          "equipment": null
+        }
+      ],
+      "troops": {
+        "swordsman": 300,
+        "pikeman": 300,
+        "archer": 250,
+        "cavalry": 88,
+        "medic": 2
+      },
+      "retreatBelowPercent": 20,
+      "outcome": "cleared",
+      "wavesWon": 6,
+      "waves": [
+        {
+          "wave": 1,
+          "name": "西凉先锋",
+          "won": true,
+          "rounds": 9,
+          "endReason": "defender_wiped",
+          "troops": {
+            "swordsman": 300,
+            "pikeman": 300,
+            "archer": 250,
+            "cavalry": 88,
+            "medic": 2
+          },
+          "losses": {
+            "swordsman": 31,
+            "pikeman": 22,
+            "archer": 9,
+            "cavalry": 15
+          },
+          "survivors": {
+            "swordsman": 269,
+            "pikeman": 278,
+            "archer": 241,
+            "cavalry": 73,
+            "medic": 2
+          },
+          "enemyTroops": {
+            "militia": 500,
+            "cavalry": 150
+          },
+          "enemyLosses": {
+            "militia": 500,
+            "cavalry": 150
+          },
+          "healed": {
+            "swordsman": 6,
+            "pikeman": 5,
+            "archer": 2,
+            "cavalry": 2
+          },
+          "bonus": {
+            "mainAtkPercent": 20,
+            "mainDefPercent": 13.5,
+            "deputyAtkPercent": 3,
+            "deputyDefPercent": 2.6,
+            "scale": 1
+          }
+        }
+      ],
+      "survivors": {
+        "swordsman": 120,
+        "pikeman": 61,
+        "archer": 40,
+        "cavalry": 12
+      },
+      "woundedReturned": {},
+      "returning": {
+        "swordsman": 120,
+        "pikeman": 61,
+        "archer": 40,
+        "cavalry": 12
+      },
+      "rewards": {
+        "gold": 4100,
+        "wood": 6100,
+        "food": 6100,
+        "stone": 6100,
+        "iron": 6100
+      },
+      "treasure": {
+        "def": "dawan_horse",
+        "name": "西凉大宛马",
+        "category": "mount",
+        "effect": {
+          "marchSpeedPercent": 15,
+          "troopBonuses": {
+            "cavalry": {
+              "defPercent": 3
+            },
+            "iron_cavalry": {
+              "defPercent": 3
+            }
+          }
+        },
+        "sellGold": 2000
+      },
+      "firstClear": true,
+      "heroExp": 7380
+    }
+  }
+}
+```
+
 ## 4. 错误码参考
 
 所有错误响应的 `error.message` 为人读文案（中文），程序逻辑应依据 `error.code` 判断。
@@ -12356,6 +13272,12 @@ NPC 出兵后不再立刻结算：先给被袭击账号发预警（预警提前�
 | `AGENT_PASSWORD_FORBIDDEN` | （v47）Agent 用账号密码登录被拒：密码登录只属于玩家本人，Agent 一律用账号的永久 Agent 令牌登录（哪个站都一样）。 | 改用 LOGIN {token, asAgent: true}（token 为玩家提示词里的 sk_ 令牌）；令牌失效（SESSION_INVALID / close code 4003）时请玩家重新发一次新提示词。 |
 | `PASSWORD_LOGIN_CLOSED` | （v47）该站点不开放账号密码登录：游戏有两个站（同一套服务与数据库、账号通用），国际站 slg.yuntianyou.cc 只有 Google / GitHub 登录，国内站才有账号密码。 | 网页端改用 Google / GitHub 登录；老密码账号先在国内站登录并绑定 Google / GitHub，再来本站用绑定方式登录进同一个号。Agent 不涉及（Agent 只用令牌）。 |
 | `INTERNAL` | 服务端内部错误。 | 可稍后重试同一请求；持续出现时向运营方反馈。INTERNAL 可能出现在任何请求的响应中。 |
+| `DUNGEON_NO_ATTEMPTS` | （v61）副本：今日次数已用完（每人每天 rules.dailyAttempts 次，北京日刷新；出发即扣，失败 / 撤退不退）。 | 等北京时间次日再出征；GET_DUNGEON 的 attemptsLeft 为当前剩余次数。 |
+| `DUNGEON_POP_LIMIT` | （v62）副本：troops 按兵种人口合计超过 rules.popLimit（铁骑 / 床弩 3、冲车 5、辎重车 / 后勤兵 6，其余 1）。 | 减少部队后重发。 |
+| `DUNGEON_HERO_LIMIT` | （v61）副本：武将超过 1 名主将 + 2 名副将。 | deputyHeroIds 最多 2 名。 |
+| `DUNGEON_IN_PROGRESS` | （v61）副本：已有一支部队在打这个副本（出征在路上，GET_DUNGEON 的 active）。 | 等到达结算（PUSH_DUNGEON_STATE）后再出征。 |
+| `ITEM_NOT_FOUND` | （v61）宝物不存在或不属于本账号（含已卖出）。 | GET_ITEMS 重新拉取背包。 |
+| `ITEM_EQUIPPED` | （v61）宝物正装在武将身上，不能出售。 | 先 UNEQUIP_ITEM 卸下再 SELL_ITEM。 |
 
 ## 5. 完整示例会话
 
@@ -12707,7 +13629,8 @@ NPC 出兵后不再立刻结算：先给被袭击账号发预警（预警提前�
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "armyFoodUsePerHour": 0,
       "timeScale": 1,
@@ -13287,7 +14210,8 @@ Agent 与玩家看同一座城（同一账号），但 Agent **不能用账号�
         "iron_cavalry": 0,
         "supply_wagon": 0,
         "ballista": 0,
-        "siege_ram": 0
+        "siege_ram": 0,
+        "medic": 0
       },
       "armyFoodUsePerHour": 0,
       "timeScale": 1,
@@ -13581,7 +14505,7 @@ LOGOUT 吊销本连接登录所用的令牌，服务端随即关闭连接（clos
 
 ## 6. 兵种与战斗属性
 
-11 个兵种的单兵战斗属性（v18 起公开；v33 起含二期的铁骑兵 / 辎重车 / 床弩 / 冲车及克制关系）。相对关系可用于编队搭配与出征评估：射程决定能否攻击到目标（近战 10、弓箭 70——纯近战对守方远程可能全场打不到），战斗速度决定行动先后与接敌快慢。伤害与判定的具体算法不对外公开（机制概览见术语表「战斗」）；战报提供逐回合的双方伤害与损失统计。
+12 个兵种的单兵战斗属性（v18 起公开；v33 起含二期的铁骑兵 / 辎重车 / 床弩 / 冲车及克制关系）。相对关系可用于编队搭配与出征评估：射程决定能否攻击到目标（近战 10、弓箭 70——纯近战对守方远程可能全场打不到），战斗速度决定行动先后与接敌快慢。伤害与判定的具体算法不对外公开（机制概览见术语表「战斗」）；战报提供逐回合的双方伤害与损失统计。
 
 | 兵种 | kind | 生命 | 攻击 | 防御 | 战斗速度 | 射程 | 行军速度系数 | 军营 | 负重 | 人口 | 克制 / 抗性 / 特性 |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -13596,6 +14520,7 @@ LOGOUT 吊销本连接登录所用的令牌，服务端随即关闭连接（clos
 | 辎重车 | supply_wagon | 600 | 0 | 50 | 8 | 10 | 0.7 | Lv3 | 5000 | 6 | — |
 | 床弩 | ballista | 300 | 260 | 40 | 8 | 95 | 0.6 | Lv7 | 0 | 3 | — |
 | 冲车 | siege_ram | 1500 | 60 | 200 | 10 | 10 | 0.6 | Lv8 | 0 | 5 | 破墙：攻城时每占攻方存活总兵数 1% 使守方城墙减伤相对降低 8%（最多 80%） |
+| 后勤兵 | medic | 250 | 0 | 20 | 12 | 10 | 1 | Lv3 | 0 | 6 | — |
 
 二期兵种定位（v33）：**铁骑兵**军营 11 级解锁的后期重装主力（贵、高粮耗，受长枪克制）；**辎重车**军营 3 级解锁的纯后勤——负重 5000（民夫的 10 倍）、攻击 0，出征 / 运输计入负重，必须有战斗部队护送；**床弩**军营 7 级解锁、射程 95 的反弓箭器械，脆而慢、需近战掩护，**打不到箭塔**（箭塔是不会被消灭的固定输出）；**冲车**军营 8 级解锁、行军最慢（0.6）、负重 0，只在攻城战削弱城墙减伤——冲车每占攻方存活总兵数 1%，守方城墙减伤相对降低 8%，最多降 80%，每回合按当时存活的冲车重新计算，战报 wallBreak 给出开战时的「原减伤 → 破墙后」（例：70% 墙、冲车占 5% → 42%）；野地、流寇等非攻城战斗中冲车只是肉厚攻低的单位。克制倍率表（长枪兵打骑兵 ×1.2、刀盾兵受弓箭兵 / 床弩 ×0.8）在共享规则里，新兵种统一查表。校准记录见 docs/battle-calibration.md「二期兵种」。
 
@@ -13634,7 +14559,7 @@ LOGOUT 吊销本连接登录所用的令牌，服务端随即关闭连接（clos
 - **seq**：客户端为每条请求分配的自增整数，响应原样带回，用于把响应与请求配对；推送无 seq。
 - **推送（push）**：服务端主动发给已登录连接的帧（push: true），不属于任何请求的响应。
 - **role（登录类型）**：LOGIN 时由 asAgent 声明并绑定到连接的来源标记（player / agent）。它是登录方自行声明的，不是可独立验证的身份，服务端原则上不据此做差异化访问控制（例外：RESET_ACCOUNT 仅玩家、AGENT_REPORT_PLAN 仅 Agent——基于自报 role 的协议级限制，不是可验证的安全边界）。
-- **兵种（troop）**：一期七种：porter 民夫、militia 义兵、scout 斥候、pikeman 长枪兵、swordsman 刀盾兵、archer 弓箭兵、cavalry 轻骑兵；二期（v33，AISLG-86~90）再加铁骑兵 iron_cavalry（军营 11 级后期重装主力）、辎重车 supply_wagon（军营 3 级，负重 5000 的纯后勤）、床弩 ballista（军营 7 级，射程 95）、冲车 siege_ram（军营 8 级，攻城时削弱城墙减伤）。各有军营等级门槛、单兵成本、时长与小时耗粮（占位数值，见 RECRUIT）；军队耗粮已接入（v14，见 GET_STATE 的 armyFoodUsePerHour）。city.army 按兵种统计城内驻军，征兵完成时累加。
+- **兵种（troop）**：一期七种：porter 民夫、militia 义兵、scout 斥候、pikeman 长枪兵、swordsman 刀盾兵、archer 弓箭兵、cavalry 轻骑兵；二期（v33，AISLG-86~90）再加铁骑兵 iron_cavalry（军营 11 级后期重装主力）、辎重车 supply_wagon（军营 3 级，负重 5000 的纯后勤）、床弩 ballista（军营 7 级，射程 95）、冲车 siege_ram（军营 8 级，攻城时削弱城墙减伤）；v62 加后勤兵 medic（军营 3 级，零攻击 / 零负重，只在副本胜利的非末波后救治，辎重车不救治）。各有军营等级门槛、单兵成本、时长与小时耗粮（占位数值，见 RECRUIT）；军队耗粮已接入（v14，见 GET_STATE 的 armyFoodUsePerHour）。city.army 按兵种统计城内驻军，征兵完成时累加。
 - **征兵队列（recruitQueue）**：军营处理征兵：RECRUIT 无征募中时立即开始（status=recruiting，时长 = 单兵时长 × 数量），有征募中且未满时入队（status=queued）；队列 = 1 征募中 + 最多 2 排队（占位）。资源与人口在发起时扣减，取消排队条目全额返还；征募中能否取消待定。队列独立于建造队列。
 - **守城加成（defenseBonus）**：城墙为守城提供的防御加成（占位：前 10 级每级 +5、11~20 级每级 +2——20 级 70，v31 AISLG-85；百分数数值；v27 起另加城防科技每级 +1 个百分点），随 GET_STATE 下发；消费方是守城战斗结算。v30（AISLG-82）起另有**箭塔**：守城战里城墙位上不会被消灭的远程单位，每回合开始对射程内最近的敌方兵堆造成固定伤害（150 × 等级，不走判定链、不吃防御与城墙减伤；射程 45 + 5 × 等级，攻方距城墙位 ≤ 射程才被射），仅守城战（NPC 袭击主城）生效，守军全灭仍判守城失败；战报单独列出箭塔伤害（towerDamage / roundLog[].towerDamage）。数值校准见 docs/battle-calibration.md「箭塔」。
 - **计划（plan）**：Agent 经 AGENT_REPORT_PLAN 上报的两段自报文本：nextAction（下一步动作）与 overallPlan（整体计划）。账号只保留最新快照（后写覆盖，RESET_ACCOUNT 清空），经 GET_AGENT_INFO 的 plan 字段查询、PUSH_AGENT_PLAN 推送。它是托管监控的展示信息，未经验证、不参与游戏逻辑。
@@ -13666,7 +14591,7 @@ LOGOUT 吊销本连接登录所用的令牌，服务端随即关闭连接（clos
 - 只加不改：已发布的协议号、字段与错误码只新增、不删除、不改变类型与语义。
 - 新增字段不视为破坏兼容：消费方应容忍请求与响应中出现文档未列出的字段。
 - 必须破坏语义时启用新的协议号承载新行为，旧协议号保留原语义直至正式公告下线。
-- 协议版本随对外协议内容的每次变化递增；当前为 60。
+- 协议版本随对外协议内容的每次变化递增；当前为 63。
 - Agent 可在启动时请求 `GET /agent-api.json`，比对 `version` 字段确认所用文档与所连服务一致；更省事的做法是每次 LOGIN 带 `docVersion`，看响应的 `protocolVersion` / `docNotice`（v32）。
 - 增量变更：`GET /agent-api/changes/{since}`（也接受 `?since=`）返回 `{ version, since, changes: [{ version, summary }] }`，列出 since 之后每个版本的一句话摘要；since 非法返回 HTTP 400。
 

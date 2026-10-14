@@ -128,9 +128,10 @@ export const ARMY_COPY = {
     archer: '远程',
     cavalry: '反远程',
     iron_cavalry: '重骑',
-    supply_wagon: '后勤',
+    supply_wagon: '运输',
     ballista: '器械',
     siege_ram: '攻城',
+    medic: '救治',
   } as Record<string, string>,
 };
 

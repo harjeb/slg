@@ -27,6 +27,8 @@ export const SERVER_BROADCAST_TYPES = [
   'star_tower_cleared',
   // v60（AISLG-162）公告：运维发布公告时同步播报一句标题，点开跳到公告；运维主动发布，必达（不受每分钟限频）
   'announcement',
+  // v61 副本：玩家首次通关某副本，全服必达
+  'dungeon_cleared',
 ] as const;
 
 export type ServerBroadcastType = (typeof SERVER_BROADCAST_TYPES)[number];
@@ -102,7 +104,8 @@ export interface ServerBroadcastView {
    *  yt_finished = { reason: boss_cleared|timeout, clearedCamps, totalCamps, scatteredCamps }；
    *  arena_champion = { username, previous }（v53，登上第 1 名，previous 为被取代的原第 1 名）；
    *  star_tower_cleared = { username, floor }（v55，将星塔 Boss 层首通）；
-   *  announcement = { announcementId, title }（v60，公告标题，标题为中文） */
+   *  announcement = { announcementId, title }（v60，公告标题，标题为中文）；
+   *  dungeon_cleared = { username, dungeonId, dungeonName }（v61，首次通关副本） */
   detail: Record<string, unknown>;
   createdAt: string;
 }

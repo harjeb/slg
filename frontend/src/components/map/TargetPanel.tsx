@@ -4,6 +4,7 @@
  *  出征 / 侦察 / 撤回的动作与会话切片 worldSession 对接；权威状态随按需查询对齐。
  */
 
+import { DungeonTargetNote } from './DungeonTargetNote';
 import { useEffect, useMemo, useState } from 'react';
 import { DeployContext } from '../../state/deployContext';
 import { useGame } from '../../state/GameContext';
@@ -75,6 +76,8 @@ export function TargetPanel() {
         // 他人占领的野地（v39 AISLG-123）：只能抢占，不能掠夺
         acts.push('occupy', 'scout');
       }
+    } else if (detail.kind === 'dungeon') {
+      // v61：副本入口不接普通出征，说明块里引导到副本页
     } else if (isOwnCity) {
       if (transferable) {
         acts.push('transfer', 'transport');
@@ -162,6 +165,8 @@ export function TargetPanel() {
               <MarchForm ctx={ctx} act={current} />
             ) : null}
           </>
+        ) : detail?.kind === 'dungeon' ? (
+          <DungeonTargetNote detail={detail} />
         ) : detail ? (
           <p className="text-[12px] text-faint">{isOwnCity ? TARGET_COPY.ownCityHere : TARGET_COPY.noOps}</p>
         ) : null}

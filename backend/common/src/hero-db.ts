@@ -29,6 +29,7 @@ import {
 } from './hero';
 import { heroDayIndex, GIFT_DAILY_LIMIT, RESET_DAILY_LIMIT, type TrainingTier } from './hero-growth';
 import { rollHeroSpecialty, SPECIALTY_RULES, type HeroSpecialty } from './hero-specialty';
+import { itemDefView, itemLead, withItemCombat } from './items';
 import type {
   FamousClaimView,
   HeroCandidateView,
@@ -42,6 +43,8 @@ type Writer = pg.PoolClient;
 /** account_heroes 行（v54：base_* 为初始属性，洗点还原到它；free_points 为未分配点数；train_* 为历练中） */
 export interface AccountHeroRow {
   specialty?: HeroSpecialty | null;
+  /** v58：已装备宝物的定义 id（account_items.hero_id 的冗余缓存，穿戴 / 卸下 / 出售时同事务维护） */
+  equip_def?: string | null;
   id: string;
   account_id: string;
   name: string;
@@ -73,6 +76,11 @@ export function heroAttrs(row: AccountHeroRow): HeroAttrs {
   return { lead: row.lead, force: row.force, wit: row.wit };
 }
 
+/** 战斗用属性：统率含宝物加成（v58）；面板展示仍用 heroAttrs */
+export function heroCombatAttrs(row: AccountHeroRow): HeroAttrs {
+  return { lead: row.lead + itemLead(row.equip_def), force: row.force, wit: row.wit };
+}
+
 /** 初始属性（洗点还原用） */
 export function heroBaseAttrs(row: AccountHeroRow): HeroAttrs {
   return { lead: row.base_lead, force: row.base_force, wit: row.base_wit };
@@ -85,8 +93,7 @@ export function usedToday(day: string | null, count: number, today: number): num
 
 /** 行 → 视图（guardCityId / marchingMarchId 由调用方从占用关系查出后传入） */
 export function heroView(row: AccountHeroRow, guardCityId: string | null, marchingMarchId: string | null, now = new Date()): HeroView {
-  const attrs = heroAttrs(row);
-  const bonus = heroBattleBonus(attrs);
+  const bonus = withItemCombat(heroBattleBonus(heroCombatAttrs(row)), row.equip_def, 1);
   const today = heroDayIndex(now);
   const training: HeroTrainingView | null =
     row.train_until && row.train_tier && row.train_exp !== null
@@ -114,6 +121,7 @@ export function heroView(row: AccountHeroRow, guardCityId: string | null, marchi
     guardCityId,
     marchingMarchId,
     bonus: { atkPercent: bonus.atkPercent, defPercent: bonus.defPercent, leadCap: bonus.leadCap },
+    equipment: row.equip_def ? itemDefView(row.equip_def) : null,
     guardProductionPercent: guardProductionPercent(row.wit),
     dailyLeft: {
       gift: Math.max(0, GIFT_DAILY_LIMIT - usedToday(row.gift_day, row.gift_count, today)),
@@ -133,15 +141,20 @@ export async function loadHero(q: Queryable, heroId: string, forUpdate = false):
   return res.rowCount ? (res.rows[0] as AccountHeroRow) : null;
 }
 
-/** 随行占用：hero_id → 行军 id（status='marching'，含返程；行军结束自然释放） */
+/** 随行占用：hero_id → 行军 id（status='marching'，含返程；行军结束自然释放）。v61 起副本的副将同样占用 */
 export async function heroBusyMarchMap(q: Queryable, accountId: string): Promise<Map<string, string>> {
   const res = await q.query(
-    `SELECT id, hero_id FROM marches WHERE account_id = $1 AND status = 'marching' AND hero_id IS NOT NULL`,
+    `SELECT id, hero_id, deputy_hero_ids FROM marches
+     WHERE account_id = $1 AND status = 'marching' AND (hero_id IS NOT NULL OR deputy_hero_ids IS NOT NULL)`,
     [accountId],
   );
   const map = new Map<string, string>();
-  for (const row of res.rows as Array<{ id: string; hero_id: string }>) {
-    map.set(row.hero_id, row.id);
+  for (const row of res.rows as Array<{ id: string; hero_id: string | null; deputy_hero_ids: string[] | null }>) {
+    for (const heroId of [row.hero_id, ...(row.deputy_hero_ids ?? [])]) {
+      if (heroId) {
+        map.set(heroId, row.id);
+      }
+    }
   }
   return map;
 }
@@ -322,12 +335,13 @@ export async function assignCityGuard(client: Writer, cityId: string, heroId: st
 }
 
 /** 战斗加成（Worker 结算用）：武将行 + 部队规模 → 引擎可用的加成；无武将为 null */
-export function battleBonusOf(row: AccountHeroRow | null, troopCount: number): HeroBattleBonus | null {
+export function battleBonusOf(row: AccountHeroRow | null, troopCount: number): HeroBattleBonus & import('./battle-engine').HeroCombatBonus | null {
   if (!row) {
     return null;
   }
-  const bonus = heroBattleBonus(heroAttrs(row), troopCount);
-  return { ...bonus, specialty: row.famous ? null : row.specialty ?? null, specialtyScale: bonus.scale };
+  const base = heroBattleBonus(heroCombatAttrs(row), troopCount);
+  const bonus = withItemCombat(base, row.equip_def, base.scale);
+  return { ...bonus, specialty: row.famous ? null : row.specialty ?? null, specialtyScale: base.scale };
 }
 
 /** 战后经验与成长（v36，AISLG-116）：升级时三项属性自动成长（普通将 +1 / 名将 +2 每级） */

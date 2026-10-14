@@ -9,6 +9,7 @@ import { simulateBattle, type BattleResult } from './battle-engine';
 import { heroBattleBonus, rollHeroName, type HeroAttrs } from './hero';
 import { getTimeScale } from './time-scale';
 import { formationArmy, type FormationKind } from './army-formation';
+import { itemLead, withItemCombat } from './items';
 import type { HeroSpecialty } from './hero-specialty';
 
 // ---- 数值（全部占位，上线前按校准结果与经济核对） ----
@@ -119,6 +120,8 @@ export function milestoneRewards(prevBest: number, newBest: number): { gold: num
 /** 参赛武将的快照（对战只看属性；名字用于战报展示） */
 export interface ArenaFighter {
   specialty?: HeroSpecialty | null;
+  /** v58：宝物定义 id（统率加成计入标准军队人数与加成上限，攻击 / 减伤叠加） */
+  equipment?: string | null;
   formation?: FormationKind;
   name: string;
   lead: number;
@@ -175,7 +178,7 @@ export function standardArmy(lead: number): Partial<Record<TroopKind, number>> {
 }
 
 function attrsOf(fighter: ArenaFighter): HeroAttrs {
-  return { lead: fighter.lead, force: fighter.force, wit: fighter.wit };
+  return { lead: fighter.lead + itemLead(fighter.equipment), force: fighter.force, wit: fighter.wit };
 }
 
 /** 单局交战：挑战方当「攻方」。回合耗尽未分胜负（引擎判攻方战败）按守擂方胜处理 */
@@ -184,14 +187,14 @@ export function fightRound(
   defender: ArenaFighter,
   rng: () => number,
 ): { challengerWon: boolean; result: BattleResult } {
-  const armyC = formationArmy(standardArmySize(challenger.lead), challenger.formation);
-  const armyD = formationArmy(standardArmySize(defender.lead), defender.formation);
+  const armyC = formationArmy(standardArmySize(attrsOf(challenger).lead), challenger.formation);
+  const armyD = formationArmy(standardArmySize(attrsOf(defender).lead), defender.formation);
   // 不传兵数：加成按 scale = 1 计算，不摊薄（竞技场专用，PvE 仍走 heroBattleBonus 的摊薄口径）
-  const bonusC = heroBattleBonus(attrsOf(challenger));
-  const bonusD = heroBattleBonus(attrsOf(defender));
+  const bonusC = withItemCombat(heroBattleBonus(attrsOf(challenger)), challenger.equipment, 1);
+  const bonusD = withItemCombat(heroBattleBonus(attrsOf(defender)), defender.equipment, 1);
   const result = simulateBattle(armyC, armyD, {
-    attackerHero: { atkPercent: bonusC.atkPercent, defPercent: bonusC.defPercent, specialty: challenger.specialty },
-    defenderHero: { atkPercent: bonusD.atkPercent, defPercent: bonusD.defPercent, specialty: defender.specialty },
+    attackerHero: { ...bonusC, specialty: challenger.specialty },
+    defenderHero: { ...bonusD, specialty: defender.specialty },
     rng,
   });
   return { challengerWon: result.attackerWon, result };

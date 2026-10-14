@@ -71,6 +71,8 @@ export const SERVER_BROADCAST_TYPES = [
   'arena_champion',
   // v60 AISLG-162 公告：运维发布时同步播报标题（detail.announcementId / title）
   'announcement',
+  // v61 副本：玩家首次通关
+  'dungeon_cleared',
 ] as const;
 
 export type ServerBroadcastType = (typeof SERVER_BROADCAST_TYPES)[number];

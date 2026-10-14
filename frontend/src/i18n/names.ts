@@ -82,6 +82,19 @@ function ytRewardLabelEn(label: string): string | null {
 /** 战报等场景由后端拼好的对手名 / 默认城名（backend battle 与 city 命名） */
 const SERVER_LABEL_EN: Record<string, string> = {
   主城: 'Main City',
+  // 副本·虎牢关（v61）：关卡、波次、敌将与宝物名
+  虎牢关: 'Hulao Pass',
+  西凉先锋: 'Xiliang Vanguard',
+  西凉弓骑: 'Xiliang Horse Archers',
+  '李傕、郭汜': 'Li Jue & Guo Si',
+  胡轸: 'Hu Zhen',
+  徐荣: 'Xu Rong',
+  华雄: 'Hua Xiong',
+  李傕: 'Li Jue',
+  董卓: 'Dong Zhuo',
+  七星宝刀: 'Seven-Star Sabre',
+  西凉大宛马: 'Xiliang Ferghana Horse',
+  董卓兵书: "Dong Zhuo's Art of War",
   NPC袭击部队: 'NPC raiding force',
   'NPC 袭击部队': 'NPC raiding force',
 };

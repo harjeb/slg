@@ -64,6 +64,7 @@ export const TROOP_LABEL_EN = {
   supply_wagon: { name: 'Supply Wagon', short: 'Sg' },
   ballista: { name: 'Ballista', short: 'Bl' },
   siege_ram: { name: 'Battering Ram', short: 'Br' },
+  medic: { name: 'Medical Orderlies', short: 'Md' },
 } satisfies typeof TROOP_LABEL;
 
 /** 资源名 */
@@ -92,6 +93,7 @@ export const TILE_KIND_LABEL_EN = {
   wilderness: 'Wilderness',
   npc_city: 'NPC City',
   city: 'City',
+  dungeon: 'Dungeon',
 } satisfies typeof TILE_KIND_LABEL;
 
 /** 身份名（事件流标签用） */

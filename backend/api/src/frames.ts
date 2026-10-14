@@ -100,6 +100,12 @@ export const ERROR_MESSAGES: Record<ErrorCodeType, string> = {
   STAR_TOWER_NO_CITY: '还没有城池，先建城再来挑战将星塔',
   STAR_TOWER_NO_LINEUP: '阵容里还没有武将：先在竞技场阵容里排上至少 1 名武将',
   ANNOUNCEMENT_NOT_FOUND: '公告不存在、已撤回或尚未生效',
+  DUNGEON_NO_ATTEMPTS: '今天的副本次数已用完，明天（北京时间）再来',
+  DUNGEON_POP_LIMIT: '部队人口超过副本上限',
+  DUNGEON_HERO_LIMIT: '副本最多 1 名主将 + 2 名副将',
+  DUNGEON_IN_PROGRESS: '已有部队在打这个副本，结算后才能再出征',
+  ITEM_NOT_FOUND: '宝物不存在',
+  ITEM_EQUIPPED: '宝物正装在武将身上，先卸下才能出售',
   // AGENT_TOKEN_LIMIT（v43 多令牌上限）已随 v46 移除
   INTERNAL: '服务端内部错误',
 };

@@ -45,6 +45,8 @@ export interface HeroView {
   marchingMarchId: string | null;
   /** 满编（不摊薄）时的带兵加成；实际生效随部队规模按统率摊薄（见 heroBattleBonus） */
   bonus: { atkPercent: number; defPercent: number; leadCap: number };
+  /** v61：宝物槽里的宝物（未装备为 null）；bonus 已含它的攻击 / 减伤 / 统率 */
+  equipment: import('./protocol-item').ItemDefView | null;
   /** 城守产量加成（百分数，四资源非金；未任城守也按当前智力给出可预期值） */
   guardProductionPercent: number;
   /** 今日剩余次数（v54）：赏赐 / 洗点 */

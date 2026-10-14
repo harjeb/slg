@@ -37,6 +37,8 @@ import {
 import { buildScoutIntel, resolveBattleArrival } from './battle-tick';
 import { resolveOccupyArrival, resolvePlunderArrival } from './plunder-tick';
 import { resolveCampArrival } from './yt-camp';
+import { resolveDungeonArrival } from './dungeon-tick';
+import { loadDungeonRunByReturnMarch } from '../../common/src/dungeon-db';
 import { lockYt, newYtNotifies, publishYtNotifies, type YtNotifies } from './yt-event';
 import { campGarrison, loadCampAt } from '../../common/src/yellow-turban-db';
 import { movingNotifyPayload, resolveInterceptArrival, type MovingNotify } from './intercept-tick';
@@ -83,7 +85,7 @@ export async function processDueMarches(pool: pg.Pool): Promise<number> {
     for (const march of due.rows as MarchRow[]) {
       const troops = toFullArmyCounts(march.troops ?? {});
       if (march.purpose === 'return') {
-        await settleReturn(client, march, troops);
+        await settleReturn(client, march, troops, notifies);
         notifies.push({ reason: 'march_resolved', accountId: march.account_id, marchId: march.id });
         resolved += 1;
         continue;
@@ -134,6 +136,7 @@ async function settleReturn(
   client: pg.PoolClient,
   march: MarchRow,
   troops: Partial<Record<TroopKind, number>>,
+  notifies: TileNotify[],
 ): Promise<void> {
   const { row } = await settleOwnerCity(client, march.from_city_id, march.arrive_at);
   if (row) {
@@ -152,6 +155,10 @@ async function settleReturn(
   );
   if (upd.rowCount) {
     await completeMarchEvent(client, march, 'returned', { troops });
+    const run = await loadDungeonRunByReturnMarch(client, march.id);
+    if (run) {
+      notifies.push({ reason: 'dungeon_state', accountId: march.account_id, data: { reason: 'returned', runId: run.id } });
+    }
   }
 }
 
@@ -184,6 +191,10 @@ async function resolveArrival(
   }
   if (march.purpose === 'intercept') {
     await resolveInterceptArrival(client, march, troops, settled, notifies, movingNotifies);
+    return;
+  }
+  if (march.purpose === 'dungeon') {
+    await resolveDungeonArrival(client, march, troops, settled, notifies);
     return;
   }
   if (march.purpose === 'scout') {

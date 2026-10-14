@@ -197,7 +197,8 @@ export async function entryLineups(q: Queryable, entries: ArenaEntryRow[]): Prom
         // 武将必须仍属于该账号（解雇后 slot 已被 ON DELETE SET NULL 清空，这里再守一道）
         return row && row.account_id === entry.account_id
           ? { heroId: row.id, name: row.name, lead: row.lead, force: row.force, wit: row.wit, level: row.level,
-            specialty: row.famous ? null : row.specialty ?? null, formation: entry.formations?.[index] ?? 'balanced' }
+            specialty: row.famous ? null : row.specialty ?? null, formation: entry.formations?.[index] ?? 'balanced',
+            equipment: row.equip_def ?? null }
           : null;
       }),
     );

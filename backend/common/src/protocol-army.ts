@@ -22,6 +22,8 @@ export const TROOP_KINDS = [
   'supply_wagon',
   'ballista',
   'siege_ram',
+  // v62：后勤医疗小队，救治只在副本波间生效
+  'medic',
 ] as const;
 
 export type TroopKind = (typeof TROOP_KINDS)[number];

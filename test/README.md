@@ -53,6 +53,18 @@ npm run test:minigame                                                      # 小
 - `minigame-flow.test.ts`：用假 `wx` 驱动 `wechat-minigame/js/login-flow.js` 对真实 API 联调，保证小游戏发出的帧与服务端协议对得上。
 - 需要可写的 PostgreSQL。**不要对共享开发库跑**：用 `initdb` 在临时目录起一个本机库（端口 18999、socket 用短路径），`DATABASE_URL` 指过去；没有 `DATABASE_URL` 时这两个文件整体跳过。
 
+## 副本与宝物联调（`test/dungeon/`）
+
+使用已存在的独立临时数据库，端口 `18093` 需空闲。从根目录执行：
+
+```bash
+DATABASE_URL=postgresql://slg@127.0.0.1:18999/slg_dungeon_test ./backend/node_modules/.bin/tsx --test test/dungeon/dungeon-flow.test.ts
+```
+
+- 覆盖入口修复、当前城出征、后勤兵征募与波间救治、辎重车不救治、战后只归队幸存部队（不返还伤兵）、API / Worker 共同编成校验、五阶段推送、六波首通与掉落、通关事件、主副将返程与释放、装备 / 卸下 / 出售、折返扣次数，以及全灭后无兵武将返程。
+- 测试 Worker 预加载 `dungeon/worker-seed.cjs`，只固定战斗种子为 `90000`，保证首通断言每次执行；生产启动不加载此文件。
+- **不要对共享开发库跑**：测试会把 `settings.time_scale` 设为 60，并直接写入城池、武将和地图夹具。没有 `DATABASE_URL` 时跳过；结束会回收自己的 API / Worker，临时数据库由执行者创建、删除。
+
 ## Google 登录联调（`test/google/`）
 
 形态同微信联调：`google/harness.ts` 起假 JWKS 服务（本地 RSA 公钥）+ 真实 API 进程（临时端口，经 `GOOGLE_CERTS_URL` 指向假公钥），测试用同一把私钥签 Google ID Token。

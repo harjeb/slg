@@ -30,6 +30,8 @@ import { ARENA_COPY } from '../copy-arena';
 import { ARENA_COPY_EN } from '../copy-arena-en';
 import { STAR_TOWER_COPY } from '../copy-star-tower';
 import { STAR_TOWER_COPY_EN } from '../copy-star-tower-en';
+import { DUNGEON_COPY } from '../copy-dungeon';
+import { DUNGEON_COPY_EN } from '../copy-dungeon-en';
 import { FOOT_COPY, MODAL_COPY, NAV_COPY, PAGED_COPY, TOP_COPY } from '../copy-ui';
 import { FOOT_COPY_EN, MODAL_COPY_EN, NAV_COPY_EN, PAGED_COPY_EN, TOP_COPY_EN } from '../copy-ui-en';
 import { GITHUB_COPY } from '../copy-github';
@@ -84,6 +86,7 @@ const ZH = {
   TECH_COPY,
   ARENA_COPY,
   STAR_TOWER_COPY,
+  DUNGEON_COPY,
   PAGED_COPY,
   MODAL_COPY,
   NAV_COPY,
@@ -133,6 +136,7 @@ const EN: Bundle = {
   TECH_COPY: TECH_COPY_EN,
   ARENA_COPY: ARENA_COPY_EN,
   STAR_TOWER_COPY: STAR_TOWER_COPY_EN,
+  DUNGEON_COPY: DUNGEON_COPY_EN,
   PAGED_COPY: PAGED_COPY_EN,
   MODAL_COPY: MODAL_COPY_EN,
   NAV_COPY: NAV_COPY_EN,

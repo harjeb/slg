@@ -48,7 +48,7 @@ export const REQUEST_RECRUIT: RequestOpDoc = {
   preAuth: false,
   summary: `在当前城池的军营征募士兵（v11）。每种兵有解锁所需的军营等级（未达返回 TROOP_NOT_AVAILABLE）与单兵成本；每次征募 1..${RECRUIT_COUNT_MAX} 人，成本 = 单兵成本 × 数量、人口 = 单兵人口 × 数量，**发起时立即扣减资源与人口**（取消排队条目时全额返还）。征兵队列独立于建造队列：无征募中时立即开始（status=recruiting，dueAt 为预计完成时间，时长 = max(1 秒, floor(单兵基准时长 × 数量 ÷ time_scale))——**1 秒下限作用于批次总时长**而非单兵，**结果向下取整到整秒**（v22 修复 AISLG-39，与建造/升级同模型；显式验证环境变量覆盖时不再缩放）），有征募中且排队未满（当前 2 条，占位）时入队，队满返回 RECRUIT_QUEUE_FULL。资源不足返回 INSUFFICIENT_RESOURCES（v22 起附 shortfall 缺口与 retryAfterSeconds——按当前净产量推导，等满后重发必然成功），人口不足返回 INSUFFICIENT_POPULATION（v22 起附 shortfall 与 retryAfterSeconds——按人口增速推导），失败响应附当前城池状态（**data 仅含 city，无 recruit 载荷**——客户端必须先判 ok 再取载荷）。玩家与 Agent 均可发起。当前兵种：${TROOP_SUMMARY}（均为占位数值）。军队耗粮已接入（v14）：单兵 foodUse 计入城池净产量，城内 1 倍、行军/野地驻军 2 倍（见 GET_STATE 的 armyFoodUsePerHour），断粮仅停止增长；战斗属性随战斗玩法设计。`,
   requestFields: [
-    { name: 'troop', type: TROOP_TYPE, desc: '必填。兵种（一期七种 + v33 二期四种：铁骑兵 iron_cavalry 军营 11 级 / 辎重车 supply_wagon 军营 3 级 / 床弩 ballista 军营 7 级 / 冲车 siege_ram 军营 8 级）；缺失或不是已知兵种返回 INVALID_PARAMS。' },
+    { name: 'troop', type: TROOP_TYPE, desc: '必填。兵种（一期七种 + v33 二期四种：铁骑兵 iron_cavalry 军营 11 级 / 辎重车 supply_wagon 军营 3 级 / 床弩 ballista 军营 7 级 / 冲车 siege_ram 军营 8 级；v62 后勤兵 medic 军营 3 级，零攻击与负重，仅提供副本波间救治，占位数值待校准）；缺失或不是已知兵种返回 INVALID_PARAMS。' },
     { name: 'count', type: 'number', desc: `必填。征募数量，1..${RECRUIT_COUNT_MAX} 的整数（占位上限）；越界或非整数返回 INVALID_PARAMS。` },
   ],
   dataFields: [

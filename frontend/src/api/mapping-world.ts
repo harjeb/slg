@@ -204,6 +204,9 @@ function baseEventText(view: EventView): string {
         );
       }
       const clock = formatClock(String(view.detail.arriveAt ?? ''));
+      if (view.detail.purpose === 'dungeon') {
+        return getCopy().DUNGEON_COPY.march.startedLog(clock);
+      }
       return view.detail.purpose === 'return'
         ? EXTRA_STATE.event.marchReturn(posOf(view.detail), clock)
         : EXTRA_STATE.event.marchOut(task, posOf(view.detail), troops, clock);
@@ -283,10 +286,21 @@ function baseEventText(view: EventView): string {
           return CITY_COPY.transport.eventReceived(tName(String(view.detail.fromCityName ?? EXTRA_STATE.mapping.otherCityFallback)), cargoText(view.detail.cargo as Partial<Resources>));
         case 'scouted':
           return scoutCompletedText(view.detail);
+        case 'dungeon_cleared':
+        case 'dungeon_defeated':
+        case 'dungeon_retreated': {
+          // v61：副本结算（outcome = dungeon_<cleared|defeated|retreated>）
+          const { DUNGEON_COPY } = getCopy();
+          const outcome = String(view.detail.outcome).replace('dungeon_', '') as 'cleared' | 'defeated' | 'retreated';
+          const treasure = typeof view.detail.treasure === 'string' ? view.detail.treasure : '';
+          return DUNGEON_COPY.march.resolvedLog(DUNGEON_COPY.reports.outcome[outcome], Number(view.detail.wavesWon ?? 0), treasure ? DUNGEON_COPY.items.treasureName(treasure) : '');
+        }
         default:
           return EXTRA_STATE.event.marchArrived(pos);
       }
     }
+    case 'dungeon_cleared':
+      return getCopy().DUNGEON_COPY.clearedEvent(tName(String(view.detail.dungeonName ?? view.detail.dungeonId)), view.detail.firstClear === true);
     case 'wilderness_occupied': {
       const resource = terrainResourceLabel(view.detail.resource);
       const bonus = typeof view.detail.bonusRate === 'number' ? EXTRA_STATE.event.wildBonus(resource, view.detail.bonusRate) : '';
@@ -448,6 +462,9 @@ export function serverBroadcastText(view: {
     case 'star_tower_cleared':
       // v55 AISLG-146：将星塔 Boss 层首通（floor 为刚通过的层）
       return EXTRA_STATE.broadcast.starTowerCleared(actor, Number(view.detail.floor ?? 0));
+    case 'dungeon_cleared':
+      // v61：玩家首次通关副本
+      return getCopy().DUNGEON_COPY.broadcast(actor, tName(String(view.detail.dungeonName ?? '')));
     case 'yt_finished':
       return YT_COPY.broadcast.finished(String(view.detail.reason ?? ''), Number(view.detail.clearedCamps ?? 0), Number(view.detail.totalCamps ?? 0), Number(view.detail.scatteredCamps ?? 0));
     default:

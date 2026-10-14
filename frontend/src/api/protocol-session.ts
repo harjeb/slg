@@ -16,6 +16,7 @@ export type EventType =
   | 'recruit_cancelled'
   | 'march_started'
   | 'march_completed'
+  | 'dungeon_cleared'
   | 'wilderness_occupied'
   | 'wilderness_lost'
   | 'npc_city_occupied'

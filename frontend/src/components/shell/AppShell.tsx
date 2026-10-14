@@ -17,6 +17,7 @@ import { IntelPage } from '../pages/IntelPage';
 import { MapPage } from '../pages/MapPage';
 import { OverviewPage } from '../pages/OverviewPage';
 import { StarTowerPage } from '../pages/StarTowerPage';
+import { DungeonPage } from '../pages/DungeonPage';
 import { AccountDialogs, type AccountDialogMode } from './AccountDialogs';
 import { BottomBar } from './BottomBar';
 import { ChatWindow } from '../chat/ChatWindow';
@@ -89,6 +90,7 @@ export function AppShell() {
         {page === 'army' ? <ArmyPage /> : null}
         {page === 'growth' ? <GrowthPage /> : null}
         {page === 'starTower' ? <StarTowerPage /> : null}
+        {page === 'dungeon' ? <DungeonPage /> : null}
         {page === 'intel' ? <IntelPage /> : null}
         {page === 'agent' ? <AgentPage /> : null}
       </main>

@@ -100,6 +100,8 @@ import { CHAT_OP_DOC } from './protocol-doc-ops-chat';
 import { ARENA_OP_DOCS } from './protocol-doc-ops-arena';
 import { STAR_TOWER_OP_DOCS } from './protocol-doc-ops-star-tower';
 import { ANNOUNCEMENT_OP_DOCS } from './protocol-doc-ops-announcement';
+import { DUNGEON_OP_DOCS } from './protocol-doc-ops-dungeon';
+import { ITEM_OP_DOCS } from './protocol-doc-ops-items';
 import { HERO_GROWTH_OP_DOCS } from './protocol-doc-ops-hero-growth';
 import { REQUEST_GET_DAILY, REQUEST_CLAIM_DAILY, REQUEST_GET_SIGNIN, REQUEST_SIGNIN } from './protocol-doc-ops-quest';
 import { REQUEST_GET_QUESTS, REQUEST_CLAIM_QUEST, REQUEST_GET_ACTIVITIES, REQUEST_CLAIM_ACTIVITY } from './protocol-doc-ops-quests';
@@ -130,7 +132,7 @@ const REQUEST_GET_STATE: RequestOpDoc = {
     { name: 'city.farms', type: 'number', desc: '**DEPRECATED（v3 遗留，勿用）**：兼容字段，= buildings.farm（0/1 已建标记）；等级请读 city.levels.farm。' },
     { name: 'city.production', type: 'object', desc: '当前小时产量（v3 新增，v7 起含 gold）：{ gold, food, wood, stone, iron }；四种生产资源各含 100/小时的基础产量（无对应建筑也产出），建筑产量按等级叠加；金币由官府（100×等级/小时，v19）与占领金矿生产（无基础产量）。产量随建筑建成即时生效。' },
     { name: 'city.population', type: 'object', desc: '人口现状（v7 新增，v8 规则确认，v19 数值修订）：{ current 当前人口, cap 上限（= 50 + 100 × 民房等级 × (民房等级 + 1)，无民房即基线 50）, growthPerHour 每小时增长（基准 = 10 × 民房等级 × (等级 + 1)，无民房为 0；实际 × 全局时间缩放） }；current ≥ cap 时停止增长（新号即 50/50 满编、增速 0，建民房后恢复增长）；征兵将消耗人口。' },
-    { name: 'city.army', type: 'object', desc: '城内驻军（v11 新增）：{ porter, militia, scout, pikeman, swordsman, archer, cavalry, iron_cavalry, supply_wagon, ballista, siege_ram }（后四种为 v33 二期兵种），按兵种统计；征兵完成（recruit_completed）时累加。' },
+    { name: 'city.army', type: 'object', desc: '城内驻军（v11 新增）：{ porter, militia, scout, pikeman, swordsman, archer, cavalry, iron_cavalry, supply_wagon, ballista, siege_ram, medic }（铁骑至冲车为 v33 二期兵种，medic 后勤兵为 v62），按兵种统计；征兵完成（recruit_completed）时累加。' },
     { name: 'city.armyFoodUsePerHour', type: 'number', desc: '全军小时耗粮（v14 新增，实际值 × 全局时间缩放，与产出同幅）：城内驻军 1 倍 + 行军中/野地驻军 2 倍（单兵耗粮见各兵种 foodUse）。production.food 为毛产量，净粮 = production.food − 本值，可为负；结算把粮食扣到 0 为止、不记负债；**v34（AISLG-107）起断粮不再只是停止增长**：粮食为 0 且净产量为负时，每小时（缩放后）城内驻军每兵种减 10%（见 city.starveAt / city.mutinyNextAt 与 PUSH_STARVATION_STATE）。' },
     { name: 'city.starveAt', type: 'string | null', desc: '预计断粮时间（v34，AISLG-107；ISO 8601）：按当前粮食与净产量（粮毛产量 production.food − armyFoodUsePerHour）推算，已断粮 = 当前时刻，净产量不为负（不会断粮）为 null。距断粮不足 1 小时（缩放后）推送一次预警。' },
     { name: 'city.mutinyNextAt', type: 'string | null', desc: '下一次断粮哗变时刻（v34）：已断粮（粮食 0 且净产量为负）时有值——到点本城城内驻军每个兵种减 10%（向上取整、至少 1 个，在外部队不受影响、不强制召回）；否则 null。'  },
@@ -246,7 +248,7 @@ const REQUEST_GET_EVENTS: RequestOpDoc = {
     {
       name: 'events[].type',
       type: 'string',
-      desc: "事件类型：'build_started' | 'build_queued' | 'build_completed' | 'build_cancelled'（v7） | 'recruit_started' | 'recruit_queued' | 'recruit_completed' | 'recruit_cancelled'（v11） | 'march_started' | 'march_completed' | 'wilderness_occupied' | 'wilderness_lost' | 'npc_city_occupied' | 'npc_raid'（v12） | 'city_renamed'（v7） | 'account_reset'（v9，重置后事件流只剩这一条） | 'agent_connected' | 'agent_disconnected' | 'resource_exchanged'（v22，集市兑换成交，detail = { resource, amount, gold, rate }） | 'npc_attack_warning'（v23，NPC 袭击预警，detail = { x, y, target, terrain, level, armyMin, armyMax, arriveAt, attackId }） | 'starvation_warning' / 'mutiny'（v34，断粮预警 / 哗变） | 'hero_recruited' / 'hero_dismissed' / 'hero_arrears' / 'hero_wounded' / 'hero_level_up' / 'hero_granted' / 'guard_changed'（v36，AISLG-114/115/116，武将：招募 / 解雇 / 欠饷 / 重伤 / 升级 / 获得名将 / 城守任命）。",
+      desc: "事件类型：'build_started' | 'build_queued' | 'build_completed' | 'build_cancelled'（v7） | 'recruit_started' | 'recruit_queued' | 'recruit_completed' | 'recruit_cancelled'（v11） | 'march_started' | 'march_completed' | 'dungeon_cleared'（v61，每次副本通关都会记录；detail = { dungeonId, dungeonName, runId, firstClear }，可用于任务 / 成就计数） | 'wilderness_occupied' | 'wilderness_lost' | 'npc_city_occupied' | 'npc_raid'（v12） | 'city_renamed'（v7） | 'account_reset'（v9，重置后事件流只剩这一条） | 'agent_connected' | 'agent_disconnected' | 'resource_exchanged'（v22，集市兑换成交，detail = { resource, amount, gold, rate }） | 'npc_attack_warning'（v23，NPC 袭击预警，detail = { x, y, target, terrain, level, armyMin, armyMax, arriveAt, attackId }） | 'starvation_warning' / 'mutiny'（v34，断粮预警 / 哗变） | 'hero_recruited' / 'hero_dismissed' / 'hero_arrears' / 'hero_wounded' / 'hero_level_up' / 'hero_granted' / 'guard_changed'（v36，AISLG-114/115/116，武将：招募 / 解雇 / 欠饷 / 重伤 / 升级 / 获得名将 / 城守任命）。",
     },
     { name: 'events[].initiator', type: "'player' | 'agent' | null", desc: '发起事件的连接声明的登录类型。' },
     { name: 'events[].cityId', type: 'string | null', desc: '关联城池 id，无关联时为 null。' },
@@ -486,4 +488,6 @@ export const OP_DOC: Record<Op, OpDoc> = {
   ...STAR_TOWER_OP_DOCS,
   // 公告（v60，AISLG-162）：条目在 protocol-doc-ops-announcement.ts，玩家与 Agent 同一套规则，收录进对外 Agent 文档
   ...ANNOUNCEMENT_OP_DOCS,
+  ...DUNGEON_OP_DOCS,
+  ...ITEM_OP_DOCS,
 };

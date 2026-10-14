@@ -37,6 +37,9 @@ export function marchLabel(march: MarchView, now: number = Date.now()): string {
   if (march.purpose === 'transport') {
     return CITY_COPY.transport.marchLabel(march.x, march.y);
   }
+  if (march.purpose === 'dungeon') {
+    return getCopy().DUNGEON_COPY.march.label(march.x, march.y);
+  }
   if (march.purpose === 'plunder') {
     return COPY.worldMap.marchPlunder(march.x, march.y);
   }

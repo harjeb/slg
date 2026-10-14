@@ -31,6 +31,7 @@ export const TROOP_MARCH_SPEED: Record<TroopKind, number> = {
   supply_wagon: 0.7,
   ballista: 0.6,
   siege_ram: 0.6,
+  medic: 1,
 };
 
 /** 行军时长预估（秒）：编队最慢兵种决定速度，空编队按基准速度 1；至少按 1 格计 */

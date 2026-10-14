@@ -86,7 +86,7 @@ function winRates(
 test('兵种战斗属性：全部兵种齐全、数值为正（辎重车攻击为 0）、射程与速度覆盖克制关系', () => {
   for (const kind of TROOP_KINDS) {
     const s = TROOP_STATS[kind];
-    assert.ok(s.hp > 0 && s.def > 0 && (s.atk > 0 || kind === 'supply_wagon'), `${kind} hp/atk/def 为正（辎重车 atk=0）`);
+    assert.ok(s.hp > 0 && s.def > 0 && (s.atk > 0 || kind === 'supply_wagon' || kind === 'medic'), `${kind} hp/atk/def 为正（辎重车与后勤兵 atk=0）`);
     assert.ok(s.speed > 0 && s.range > 0, `${kind} speed/range 为正`);
     assert.ok(s.marchSpeed >= 0.1, `${kind} 行军速度系数 ≥ 0.1`);
   }
@@ -107,7 +107,7 @@ test('参考战力与编队工具：armyPower / isEmptyArmy / toFullArmyCounts',
   assert.ok(!isEmptyArmy({ militia: 1 }));
   assert.deepEqual(toFullArmyCounts({ militia: 3 }), {
     porter: 0, militia: 3, scout: 0, pikeman: 0, swordsman: 0, archer: 0, cavalry: 0,
-    iron_cavalry: 0, supply_wagon: 0, ballista: 0, siege_ram: 0,
+    iron_cavalry: 0, supply_wagon: 0, ballista: 0, siege_ram: 0, medic: 0,
   });
 });
 

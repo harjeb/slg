@@ -7,6 +7,8 @@ import pg from 'pg';
 import { NOTIFY_CHANNEL, readDbConfig } from '../../common/src/db';
 import { Op } from '../../common/src/protocol';
 import { loadBattleReport } from '../../common/src/battle-db';
+import { loadDungeonRunById } from '../../common/src/dungeon-db';
+import type { DungeonStatePushData } from '../../common/src/protocol-dungeon';
 import type { ConnectionRegistry } from './connections';
 import { buildView, marchView, recruitView, type BuildRow, type MarchRow, type RecruitRow } from './views';
 import { loadWorldWindow } from './views-world';
@@ -171,6 +173,11 @@ export class CompletionNotifier {
         });
         return;
       }
+      if (payload.reason === 'dungeon_state' && payload.accountId && payload.data) {
+        // 副本出发 / 到达 / 结算 / 回城 / 取消（v61）：推给账号全部在线连接（含 Agent）
+        void this.pushDungeonState(payload.accountId, payload.data as { reason: DungeonStatePushData['reason']; runId: number });
+        return;
+      }
       if (payload.reason === 'arena_state' && payload.accountId && payload.data) {
         // 竞技场每日奖励到账（v53，AISLG-145）：推给账号全部在线连接（含 Agent）
         this.registry.broadcast(payload.accountId, {
@@ -289,6 +296,16 @@ export class CompletionNotifier {
       }
     } catch (err) {
       console.error('push tile changed failed:', err instanceof Error ? err.message : err);
+    }
+  }
+
+  private async pushDungeonState(accountId: string, data: { reason: DungeonStatePushData['reason']; runId: number }): Promise<void> {
+    if (this.stopped) return;
+    try {
+      const run = await loadDungeonRunById(this.pool, accountId, data.runId);
+      if (run) this.registry.broadcast(accountId, { op: Op.PUSH_DUNGEON_STATE, push: true, data: { reason: data.reason, run } });
+    } catch (err) {
+      console.error('push dungeon state failed:', err);
     }
   }
 

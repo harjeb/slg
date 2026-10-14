@@ -8,6 +8,7 @@
 //   不构成死锁环；
 // - GET_BATTLE_REPORTS 按账号倒序分页（beforeId 游标）。
 
+import { cancelDungeonRunByMarch } from '../../common/src/dungeon-db';
 import { marchingPercent } from '../../common/src/tech';
 import { Op, EventType, type InitiatorRole } from '../../common/src/protocol';
 import { insertEvent } from '../../common/src/events';
@@ -235,6 +236,9 @@ export async function handleRecallMarch(
       return;
     }
     const flipped = upd.rows[0] as MarchRow;
+    const cancelledRun = march.purpose === 'dungeon'
+      ? await cancelDungeonRunByMarch(client, marchId)
+      : null;
     await insertEvent(client, {
       accountId,
       cityId: march.from_city_id,
@@ -247,6 +251,9 @@ export async function handleRecallMarch(
 
     const view = marchView(flipped);
     respondOk(ctx.registry, conn, op, seq, { march: view });
+    if (cancelledRun) {
+      ctx.registry.broadcast(accountId, { op: Op.PUSH_DUNGEON_STATE, push: true, data: { reason: 'cancelled', run: cancelledRun } });
+    }
     ctx.registry.broadcast(
       accountId,
       { op: Op.PUSH_MARCH_STATE, push: true, data: { reason: 'march_started', march: view } },

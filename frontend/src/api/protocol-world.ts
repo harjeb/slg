@@ -24,7 +24,7 @@ export const TERRAIN_KINDS = [
 export type TerrainResource = 'food' | 'wood' | 'stone' | 'iron' | 'gold';
 
 /** 地块类别：野地 / NPC 城池 / 玩家城池（主城与分城） */
-export type TileKind = 'wilderness' | 'npc_city' | 'city';
+export type TileKind = 'wilderness' | 'npc_city' | 'city' | 'dungeon';
 
 /** 地块占领者（占领野地的城，或城池地块的城主） */
 export interface TileOwnerView {
@@ -73,6 +73,8 @@ export interface TileView {
   durability: number | null;
   /** 在野名将标记（v54，AISLG-144）：该野地落有尚未被获得的在野名将 */
   wildFamous: boolean;
+  /** 副本入口（v61；kind='dungeon' 时给出，详情走 GET_DUNGEON） */
+  dungeon: { id: string; name: string } | null;
 }
 
 /** 玩家城地块的保护状态（v38，AISLG-122）；三个截止任一未到即受保护 */
@@ -141,7 +143,7 @@ export interface MarchView {
   y: number;
   troops: ArmyCounts;
   /** v16 新增 plunder（掠夺）/ occupy（占领）/ reinforce（增援）；attack 仅存量在途行军 */
-  purpose: 'plunder' | 'occupy' | 'reinforce' | 'attack' | 'scout' | 'transfer' | 'transport' | 'intercept' | 'return';
+  purpose: 'plunder' | 'occupy' | 'reinforce' | 'attack' | 'scout' | 'transfer' | 'transport' | 'intercept' | 'return' | 'dungeon';
   status: 'marching' | 'arrived' | 'returned';
   initiator: InitiatorRole;
   startedAt: string;

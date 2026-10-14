@@ -30,6 +30,7 @@ const ROUTE_TONE: Partial<Record<MarchView['purpose'], string>> = {
   occupy: 'var(--warn)',
   attack: 'var(--warn)',
   intercept: 'var(--warn)',
+  dungeon: 'var(--warn)',
   transport: 'var(--gold)',
   transfer: 'var(--gold)',
   reinforce: 'var(--gold)',

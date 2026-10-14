@@ -8,6 +8,8 @@ import type { HeroSpecialty } from './hero-specialty';
 /** 阵容里（或榜上对手阵容里）一名武将的展示快照 */
 export interface ArenaFighterView {
   specialty?: HeroSpecialty | null;
+  /** v61：宝物定义 id（未装备为 null；旧战报无此字段） */
+  equipment?: string | null;
   formation?: FormationKind;
   /** 本账号武将 id（仅「我的阵容」给出；对手阵容为 null） */
   heroId: string | null;

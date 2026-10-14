@@ -53,6 +53,7 @@ import { checkHeroMarchable } from './handlers-hero';
 import type { AccountHeroRow } from '../../common/src/hero-db';
 import { cargoOverCapacity } from '../../common/src/transport';
 import { carryingPercent, marchingPercent } from '../../common/src/tech';
+import { itemMarchPercent } from '../../common/src/items';
 import { loadTechLevels } from '../../common/src/tech-db';
 import { resolveIntercept, resolveMarchTarget } from './march-target';
 import { breakNewbieProtection, insertAttackWarning, pushAttackWarning } from './pvp';
@@ -244,7 +245,9 @@ export async function handleMarch(
     // 行军时长按编队最慢兵种折算（v13：斥候 ×2、轻骑兵 ×1.5，其余基准）
     // v30（AISLG-83）：驿站只加速自己城池之间的调兵 / 运输（出发城驿站等级，每级 +10%）
     const stationBonus = target.purpose === 'transfer' || target.purpose === 'transport' ? stationPercent(snap.levels.post_station) : 0;
-    const travel = marchTravelSeconds(snap.x, snap.y, x, y, troops, marchingPercent(snap.techs) + stationBonus);
+    // v58：随队武将的坐骑加速
+    const mountBonus = marchHero ? itemMarchPercent(marchHero.equip_def) : 0;
+    const travel = marchTravelSeconds(snap.x, snap.y, x, y, troops, marchingPercent(snap.techs) + stationBonus + mountBonus);
     const arriveMs = dbNow.getTime() + travel * 1000;
     // v35（AISLG-112）：截击「到了先埋伏」——目标路线与时刻表固定，出发即可算出接战时刻 =
     // max(到达时刻, 目标进入选定格相邻范围的时刻)，Worker 按该时刻结算；提前到达的部队

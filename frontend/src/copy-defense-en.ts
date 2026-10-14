@@ -61,8 +61,9 @@ export const DEFENSE_COPY_EN = {
     archer: 'Ranged damage dealer with range 70; fragile. Deals −20% damage to Swordsmen.',
     cavalry: 'Fastest in battle — crosses Archer range in one round, the dedicated anti-ranged unit; countered by Spearmen (takes −20% damage).',
     iron_cavalry: 'Late-game heavy mainstay: 2400 HP, 620 attack, 420 defense; expensive with heavy Food upkeep (30/h); countered by Spearmen.',
-    supply_wagon: 'Pure logistics with load 5000 (10× a Porter): almost no combat power and must be escorted by combat troops; transports / hauls loot back. March speed 0.7.',
+    supply_wagon: 'Transport unit with load 5000 (10× a Porter), no attack, and no healing; must be escorted by combat troops to transport / haul loot back. March speed 0.7.',
     ballista: 'Ranged engine with range 95 that can fire from outside Archer range, countering Archer formations; fragile and slow (march 0.6) and needs melee cover; cannot hit Arrow Towers. Deals −20% damage to Swordsmen.',
+    medic: 'Six-person medical team (placeholder, pending balance): no attack or load, march speed 1. Only after a won nonfinal dungeon wave, each surviving team saves up to 20 population, capped at 30% of that wave\'s losses in total.',
     siege_ram: "Slowest march (0.6) and 0 load; only works in siege battles: for every 1% of the attacker's surviving troops, the defender's wall damage reduction drops by a further 8% (up to 80%); in wilderness and other battles it is just a tough, low-attack unit.",
   } as Record<string, string>,
 } satisfies typeof DEFENSE_COPY;

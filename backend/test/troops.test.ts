@@ -19,12 +19,25 @@ setTimeScaleCache(1);
 
 const RICH = { gold: 100_000, wood: 100_000, food: 100_000, stone: 100_000, iron: 100_000 };
 
-test('兵种清单覆盖一期七种（旧游戏 1–7 号）+ 二期四种（v33）', () => {
-  assert.deepEqual([...TROOP_KINDS], ['porter', 'militia', 'scout', 'pikeman', 'swordsman', 'archer', 'cavalry', 'iron_cavalry', 'supply_wagon', 'ballista', 'siege_ram']);
+test('兵种清单覆盖一期七种、二期四种与 v62 后勤兵', () => {
+  assert.deepEqual([...TROOP_KINDS], ['porter', 'militia', 'scout', 'pikeman', 'swordsman', 'archer', 'cavalry', 'iron_cavalry', 'supply_wagon', 'ballista', 'siege_ram', 'medic']);
   for (const troop of TROOP_KINDS) {
     assert.ok(TROOP_INFO[troop].label.length > 0, `${troop} 应有中文名`);
     assert.ok(TROOP_INFO[troop].barracksLevel >= 1, `${troop} 解锁军营等级应为正`);
   }
+});
+
+test('后勤兵征募使用军营等级与六人小队人口，耗粮按小队计', () => {
+  const locked = startRecruit('medic', 2, RICH, 100, 2, 0, 0);
+  assert.ok(!locked.ok && locked.code === 'TROOP_NOT_AVAILABLE');
+  const recruited = startRecruit('medic', 2, RICH, 12, 3, 0, 0);
+  assert.ok(recruited.ok);
+  assert.equal(recruited.population, 12);
+  assert.deepEqual(recruited.cost, { gold: 400, wood: 600, food: 120, stone: 0, iron: 80 });
+  const noPeople = startRecruit('medic', 2, RICH, 11, 3, 0, 0);
+  assert.ok(!noPeople.ok && noPeople.code === 'INSUFFICIENT_POPULATION');
+  assert.equal(armyFoodUsePerHour({ medic: 2 }), 20);
+  assert.equal(TROOP_INFO.medic.carry, 0);
 });
 
 test('征募校验：军营等级门槛（未建军营同样拒绝）', () => {

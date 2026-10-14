@@ -33,6 +33,7 @@ import {
   type MovingTargetPushData,
   type TechStatePushData,
   type ArenaStatePushData,
+  type DungeonStatePushData,
   type HeroStatePushData,
   type TileStatePushData,
   type TroopKind,
@@ -59,6 +60,7 @@ import { useTechSession, type TechSession } from './techSession';
 import { useArenaSession, type ArenaSession } from './arenaSession';
 import { useStarTowerSession, type StarTowerSession } from './starTowerSession';
 import { useHeroSession, type HeroSession } from './heroSession';
+import { useDungeonSession, type DungeonSession } from './dungeonSession';
 import { useQuestSession, type QuestSession } from './questSession';
 import { useMovingTargets, type MovingTargetsSession } from './movingTargets';
 import { useMapOverview, type MapOverviewSession } from './mapOverview';
@@ -165,6 +167,8 @@ export interface GameSession {
   arenaSession: ArenaSession;
   /** 将星塔会话（v55 AISLG-146）：进度 / 挑战 / 阵容 / 战报 */
   starTowerSession: StarTowerSession;
+  /** 副本与宝物会话（v61）：副本 / 出征 / 挑战记录 / 背包 */
+  dungeonSession: DungeonSession;
   /** 武将会话（v36 AISLG-114）：武将 / 酒馆候选 / 招募 / 解雇 / 城守 / 出征带将选择 */
   heroSession: HeroSession;
   /** 任务与签到会话（v53 AISLG-200）：日常任务 / 签到状态、领奖与签到 */
@@ -364,7 +368,17 @@ export function useGameSession(): GameSession {
     scheduleSync,
     setCity,
   });
-  const { clear: heroClear, onHeroPush } = heroSession;
+  const { clear: heroClear, onHeroPush, fetchHeroes } = heroSession;
+
+  // 副本与宝物会话切片（v61）：宝物穿戴与结算经验后重拉武将
+  const dungeonSession = useDungeonSession({
+    clientRef,
+    connected: connection === 'online',
+    appendLocalEvent,
+    scheduleSync,
+    refreshHeroes: fetchHeroes,
+  });
+  const { clear: dungeonClear, onDungeonPush } = dungeonSession;
 
   // 移动目标会话切片（v28 AISLG-78）：流寇 / 运粮商队列表，推送增量合并
   const moving = useMovingTargets({ clientRef, connected: connection === 'online' });
@@ -422,6 +436,10 @@ export function useGameSession(): GameSession {
       } else if (frame.op === Op.PUSH_ARENA_STATE) {
         // v53（AISLG-145）：被挑战 / 每日奖励到账 / 首次进档——刷新竞技场并对齐城池
         onArenaPush(frame.data as unknown as ArenaStatePushData);
+        return;
+      } else if (frame.op === Op.PUSH_DUNGEON_STATE) {
+        // v61：副本状态变化——重拉副本、记录、背包、武将并对齐城池
+        onDungeonPush(frame.data as unknown as DungeonStatePushData);
         return;
       } else if (frame.op === Op.PUSH_HERO_STATE) {
         // v36（AISLG-114）：招募 / 解雇 / 城守变更 / 欠饷 / 重伤 / 经验升级 / 获得名将——重拉武将并对齐城池；
@@ -508,7 +526,7 @@ export function useGameSession(): GameSession {
       }
       scheduleSync();
     },
-    [scheduleSync, syncAll, onMarchPush, onTilePush, onBattleReportPush, onBattleReportCommentPush, onBroadcastPush, onNpcWarningPush, onTechPush, onArenaPush, onHeroPush, onMovingPush, onYtPush, onAnnouncementPush],
+    [scheduleSync, syncAll, onMarchPush, onTilePush, onBattleReportPush, onBattleReportCommentPush, onBroadcastPush, onNpcWarningPush, onTechPush, onArenaPush, onDungeonPush, onHeroPush, onMovingPush, onYtPush, onAnnouncementPush],
   );
 
   const ensureClient = useCallback((): ApiClient => {
@@ -553,6 +571,7 @@ export function useGameSession(): GameSession {
       techClear();
       arenaClear();
       starTowerClear();
+      dungeonClear();
       heroClear();
       movingClear();
       ytClear();
@@ -560,7 +579,7 @@ export function useGameSession(): GameSession {
       clientRef.current?.close();
       clientRef.current = null;
     },
-    [clearTimers, worldClear, techClear, arenaClear, starTowerClear, heroClear, movingClear, ytClear, questClear, resetCityList],
+    [clearTimers, worldClear, techClear, arenaClear, starTowerClear, dungeonClear, heroClear, movingClear, ytClear, questClear, resetCityList],
   );
 
   const scheduleReconnect = useCallback(() => {
@@ -652,11 +671,12 @@ export function useGameSession(): GameSession {
     techClear();
     arenaClear();
     starTowerClear();
+    dungeonClear();
     heroClear();
     movingClear();
     ytClear();
     questClear();
-  }, [worldClear, techClear, arenaClear, starTowerClear, heroClear, movingClear, ytClear, questClear, resetNpcWarnings, resetAnnouncements]);
+  }, [worldClear, techClear, arenaClear, starTowerClear, dungeonClear, heroClear, movingClear, ytClear, questClear, resetNpcWarnings, resetAnnouncements]);
 
   const login = useCallback(
     async (username: string, password: string) => {
@@ -1067,6 +1087,7 @@ export function useGameSession(): GameSession {
         techClear();
         arenaClear();
         starTowerClear();
+        dungeonClear();
         heroClear();
         movingClear();
         ytClear();
@@ -1078,7 +1099,7 @@ export function useGameSession(): GameSession {
     } catch (err) {
       return err instanceof Error ? err.message : COPY.errors.reset.fallback;
     }
-  }, [syncAll, worldClear, techClear, arenaClear, starTowerClear, heroClear, movingClear, ytClear, questClear, resetCityList]);
+  }, [syncAll, worldClear, techClear, arenaClear, starTowerClear, dungeonClear, heroClear, movingClear, ytClear, questClear, resetCityList]);
 
   /** 加载更早的一页事件（beforeId 游标分页；本地临时事件 id 为负，不作为游标） */
   const loadOlderEvents = useCallback(async () => {
@@ -1168,6 +1189,7 @@ export function useGameSession(): GameSession {
     techSession,
     arenaSession,
     starTowerSession,
+    dungeonSession,
     heroSession,
     questSession,
     chat,

@@ -123,6 +123,11 @@ export function HeroCard({
           {' · '}{specialtyEffect(hero.specialty)} · {combatText('招募后固定', 'Fixed on recruitment')}
         </p>
       ) : null}
+      <p role="武将面板-宝物" className={`truncate text-[11px] ${hero.equipment ? 'text-gold' : 'text-faint'}`} title={hero.equipment ? copy.DUNGEON_COPY.items.effect(hero.equipment.effect) : undefined}>
+        {hero.equipment
+          ? `${copy.DUNGEON_COPY.items.slot}：${tName(hero.equipment.name)} · ${copy.DUNGEON_COPY.items.effect(hero.equipment.effect)}`
+          : copy.DUNGEON_COPY.items.slotEmpty}
+      </p>
       <div role="武将面板-培养" className="flex flex-wrap items-center gap-1 text-[11px]" title={atHome ? undefined : growth.busyHint}>
         {hero.freePoints > 0 ? <span className="mr-0.5 font-mono text-accent">{growth.points(hero.freePoints)}</span> : null}
         {(['lead', 'force', 'wit'] as const).map((attr) => (

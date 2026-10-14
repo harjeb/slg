@@ -36,7 +36,7 @@ test('单兵负重表：全部兵种为正整数，民夫显著高于战斗兵�
   for (const kind of TROOP_KINDS) {
     const carry = TROOP_INFO[kind].carry;
     // 床弩 / 冲车为器械，负重 0（v33）；其余为正整数
-    const noCarry = kind === 'ballista' || kind === 'siege_ram';
+    const noCarry = kind === 'ballista' || kind === 'siege_ram' || kind === 'medic';
     assert.ok(Number.isInteger(carry) && (noCarry ? carry === 0 : carry > 0), `${kind} carry 合法`);
   }
   assert.equal(TROOP_INFO.porter.carry, 500, '民夫负重 500');

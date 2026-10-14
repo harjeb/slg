@@ -41,6 +41,7 @@ import { handleGetYellowTurban } from './handlers-yt';
 import { handleCancelResearch, handleGetTechs, handleResearchTech } from './handlers-tech';
 import { handleAssignHero, handleDismissHero, handleGetHeroes, handleRecruitHero } from './handlers-hero';
 import { routeHeroGrowthOp } from './handlers-hero-ops';
+import { routeDungeonOp } from './handlers-dungeon';
 import { handleTruce } from './handlers-pvp';
 import { handleArenaChallenge, handleGetArena, handleGetArenaReports, handleSetArenaLineup } from './handlers-arena';
 import { handleGetStarTower, handleGetStarTowerReports, handleStarTowerChallenge } from './handlers-star-tower';
@@ -277,6 +278,10 @@ async function dispatchOp(
       break;
     case Op.GET_STAR_TOWER:
       await handleGetStarTower(ctx, conn, op, seq);
+      break;
+    case Op.GET_DUNGEON: case Op.ENTER_DUNGEON: case Op.GET_DUNGEON_REPORTS:
+    case Op.GET_ITEMS: case Op.EQUIP_ITEM: case Op.UNEQUIP_ITEM: case Op.SELL_ITEM:
+      await routeDungeonOp(ctx, conn, op, seq, data);
       break;
     case Op.STAR_TOWER_CHALLENGE:
       await handleStarTowerChallenge(ctx, conn, op, seq);

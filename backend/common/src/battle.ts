@@ -27,6 +27,7 @@ export const TROOP_POWER: Record<TroopKind, number> = {
   supply_wagon: 1,
   ballista: 8,
   siege_ram: 3,
+  medic: 1,
 };
 
 /** 编队参考战力 = Σ 数量 × 单兵参考战力（未知兵种按 0 计） */

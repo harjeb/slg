@@ -4,6 +4,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useCopy } from '../../i18n/bundle';
+import { tName } from '../../i18n/names';
 import { BOOKMARK_LIMIT, type MapBookmarks } from '../../state/mapBookmarks';
 import type { WorldSession } from '../../state/worldSession';
 import { tileTitle } from '../worldMapTip';
@@ -50,7 +51,11 @@ export function BookmarkMenu({ world, bookmarks, accountId, className }: Bookmar
     if (!selected) {
       return;
     }
-    const label = selectedTile ? tileTitle(selectedTile, selectedTile.owner?.accountId === accountId) : `(${selected.x}, ${selected.y})`;
+    const label = selectedTile
+      ? selectedTile.kind === 'dungeon' && selectedTile.dungeon
+        ? tName(selectedTile.dungeon.name)
+        : tileTitle(selectedTile, selectedTile.owner?.accountId === accountId)
+      : `(${selected.x}, ${selected.y})`;
     bookmarks.toggle({ x: selected.x, y: selected.y, label });
   };
 

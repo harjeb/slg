@@ -11,6 +11,7 @@ const CITY_SCOPED_OPS: ReadonlySet<number> = new Set([
   Op.UPGRADE,
   Op.RENAME_CITY,
   Op.RECRUIT,
+  Op.ENTER_DUNGEON,
   Op.MARCH,
   Op.SCOUT,
   Op.EXCHANGE,

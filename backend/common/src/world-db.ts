@@ -6,6 +6,7 @@
 import pg from 'pg';
 import { ensureFamousCities } from './famous-city-db';
 import { ensureWildFamous } from './wild-famous-db';
+import { ensureDungeonSites } from './dungeon-db';
 import {
   type TerrainKind,
   type TileKind,
@@ -40,9 +41,7 @@ export async function ensureWorld(pool: pg.Pool): Promise<void> {
     if (count.rows[0].n !== expected) {
       await client.query('BEGIN');
       try {
-        if (count.rows[0].n > 0) {
-          await wipeWorldForRebuild(client);
-        }
+        await wipeWorldForRebuild(client);
         await insertWorldTiles(client, generateWorldTiles());
         await client.query('COMMIT');
       } catch (err) {
@@ -75,6 +74,7 @@ export async function ensureWorld(pool: pg.Pool): Promise<void> {
     if (wildPlaced > 0) {
       console.log(`ensureWorld: placed ${wildPlaced} wild famous heroes`);
     }
+    await ensureDungeonSites(pool);
   } finally {
     try {
       await client.query(`SELECT pg_advisory_unlock(${WORLD_LOCK_ID})`);
@@ -105,6 +105,11 @@ async function wipeWorldForRebuild(client: pg.PoolClient): Promise<void> {
      ON CONFLICT (city_id, troop)
      DO UPDATE SET count = city_army.count + EXCLUDED.count, updated_at = now()`,
   );
+  await client.query(`UPDATE dungeon_runs SET return_march_id = NULL,
+    status = CASE WHEN status = 'marching' THEN 'cancelled' ELSE status END,
+    resolved_at = CASE WHEN status = 'marching' THEN clock_timestamp() ELSE resolved_at END
+    WHERE status = 'marching' OR return_march_id IS NOT NULL`);
+  await client.query(`DELETE FROM dungeon_sites`);
   await client.query(`DELETE FROM marches`);
   await client.query(`DELETE FROM tile_army`);
   await client.query(`DELETE FROM world_tiles`);

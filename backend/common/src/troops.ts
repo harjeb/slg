@@ -15,7 +15,7 @@ export interface TroopInfo {
   label: string;
   /** 单兵征募成本（占位数值） */
   cost: Resources;
-  /** 单兵占用人口（占位：全部为 1） */
+  /** 单位占用人口（占位数值；后勤兵按六人医疗小队计） */
   population: number;
   /** 单兵征募时长（秒，占位数值；可用环境变量 RECRUIT_UNIT_SECONDS 覆盖便于验证） */
   unitSeconds: number;
@@ -137,6 +137,17 @@ export const TROOP_INFO: Record<TroopKind, TroopInfo> = {
     population: 5,
     unitSeconds: 60,
     barracksLevel: 8,
+    foodUse: 10,
+    carry: 0,
+  },
+  // v59：占位沿用原辎重车医疗投入；与运输分开，数值待校准。
+  medic: {
+    troop: 'medic',
+    label: '后勤兵',
+    cost: { gold: 200, wood: 300, food: 60, stone: 0, iron: 40 },
+    population: 6,
+    unitSeconds: 30,
+    barracksLevel: 3,
     foodUse: 10,
     carry: 0,
   },

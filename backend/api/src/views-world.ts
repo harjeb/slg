@@ -2,6 +2,7 @@
 // 野地 / NPC 数值规则见 common/src/world.ts，本文件只做行到视图的映射。
 
 import { campRowFromJson, ytTileCampView } from '../../common/src/yellow-turban-db';
+import { DUNGEONS, isDungeonId } from '../../common/src/dungeon';
 import pg from 'pg';
 import {
   TROOP_KINDS,
@@ -62,6 +63,8 @@ interface TileQueryRow extends TileRow {
   wild_force?: number | null;
   wild_wit?: number | null;
   wild_claimed?: boolean | null;
+  /** 副本入口（v61） */
+  dungeon_id?: string | null;
 }
 
 // $1 恒为请求账号 id（NPC 城池的 garrison 掩蔽按其侦察快照判定，v17；null 匹配不到任何行）
@@ -76,7 +79,8 @@ const TILE_SELECT = `
          si.detail->>'detail' AS intel_detail, si.detail->'garrisonTotal' AS intel_total,
          row_to_json(yc) AS camp_json,
          wt.wild_hero, wt.wild_lead, wt.wild_force, wt.wild_wit,
-         EXISTS (SELECT 1 FROM famous_heroes fh WHERE fh.name = wt.wild_hero) AS wild_claimed
+         EXISTS (SELECT 1 FROM famous_heroes fh WHERE fh.name = wt.wild_hero) AS wild_claimed,
+         ds.dungeon_id
   FROM world_tiles wt
   LEFT JOIN cities c ON c.id = wt.owner_city_id
   LEFT JOIN accounts a ON a.id = c.account_id
@@ -86,6 +90,7 @@ const TILE_SELECT = `
     ON ta.x = wt.x AND ta.y = wt.y
   LEFT JOIN scout_intel si ON si.account_id = $1 AND si.x = wt.x AND si.y = wt.y
   LEFT JOIN yt_camps yc ON yc.x = wt.x AND yc.y = wt.y AND yc.status = 'active'
+  LEFT JOIN dungeon_sites ds ON ds.x = wt.x AND ds.y = wt.y
 `;
 
 function emptyArmy(): Record<TroopKind, number> {
@@ -101,7 +106,7 @@ function isTerrain(value: unknown): value is TerrainKind {
 }
 
 function isTileKind(value: unknown): value is TileKind {
-  return value === 'wilderness' || value === 'npc_city' || value === 'city';
+  return value === 'wilderness' || value === 'npc_city' || value === 'city' || value === 'dungeon';
 }
 
 /** 名城标识（v24 AISLG-56）：阶段按当前时刻惰性推导，对全服可见（地图悬浮提示用） */
@@ -201,6 +206,7 @@ export function tileView(row: TileQueryRow, requesterAccountId?: string): TileVi
     protection: protectionView(row, requesterAccountId),
     durability: durabilityView(row, requesterAccountId),
     wildFamous: wildFamousMarked(row),
+    dungeon: isDungeonId(row.dungeon_id) ? { id: row.dungeon_id, name: DUNGEONS[row.dungeon_id].name } : null,
   };
 }
 

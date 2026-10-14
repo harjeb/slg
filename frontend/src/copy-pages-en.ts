@@ -134,9 +134,10 @@ export const ARMY_COPY_EN = {
     archer: 'Ranged',
     cavalry: 'Anti-ranged',
     iron_cavalry: 'Heavy Cavalry',
-    supply_wagon: 'Logistics',
+    supply_wagon: 'Transport',
     ballista: 'Siege engine',
     siege_ram: 'Siege',
+    medic: 'Medical',
   } as Record<string, string>,
 } satisfies typeof ARMY_COPY;
 

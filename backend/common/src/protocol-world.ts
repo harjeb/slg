@@ -25,7 +25,7 @@ export function isTerrainKind(value: unknown): value is TerrainKind {
 export type TerrainResource = 'food' | 'wood' | 'stone' | 'iron' | 'gold';
 
 /** 地块类别：野地 / NPC 城池 / 玩家城池（主城与分城） */
-export const TILE_KINDS = ['wilderness', 'npc_city', 'city'] as const;
+export const TILE_KINDS = ['wilderness', 'npc_city', 'city', 'dungeon'] as const;
 
 export type TileKind = (typeof TILE_KINDS)[number];
 
@@ -80,6 +80,8 @@ export interface TileView {
   durability: number | null;
   /** 在野名将标记（v54，AISLG-144）：该野地落有尚未被获得的在野名将（公开；名字与属性需侦察）；其余为 false */
   wildFamous: boolean;
+  /** 副本入口（v61；kind='dungeon' 时给出 id 与名称，详情走 GET_DUNGEON）；其余为 null */
+  dungeon: { id: string; name: string } | null;
 }
 
 /** 在野名将的地块详情（v54，AISLG-144）：标记公开，名字与属性只对侦察过该地块的账号给出 */

@@ -20,6 +20,7 @@ export const NAV_COPY = {
     army: { label: '军队', icon: '兵' },
     growth: { label: '养成', icon: '养' },
     starTower: { label: '将星塔', icon: '塔' },
+    dungeon: { label: '副本', icon: '关' },
     intel: { label: '情报', icon: '报' },
     agent: { label: 'Agent', icon: 'A' },
   },

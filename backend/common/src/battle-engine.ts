@@ -31,6 +31,7 @@ import { specialtyBonus, type HeroSpecialty } from './hero-specialty';
 export interface HeroCombatBonus {
   atkPercent: number;
   defPercent: number;
+  troopBonuses?: import('./items').ItemEffect['troopBonuses'];
   specialty?: HeroSpecialty | null;
   specialtyScale?: number;
 }
@@ -68,6 +69,8 @@ export const TROOP_STATS: Record<TroopKind, TroopStats> = {
   supply_wagon: { hp: 600, atk: 0, def: 50, speed: 8, range: 10, marchSpeed: 0.7 },
   ballista: { hp: 300, atk: 260, def: 40, speed: 8, range: 95, marchSpeed: 0.6 },
   siege_ram: { hp: 1500, atk: 60, def: 200, speed: 10, range: 10, marchSpeed: 0.6 },
+  // v59 占位：医疗小队沿用民夫防护与行军属性，无攻击；救治由副本结算处理。
+  medic: { hp: 250, atk: 0, def: 20, speed: 12, range: 10, marchSpeed: 1 },
 };
 
 // ---- 引擎参数（数值评审定稿，调整需重跑校准并更新评审记录） ----
@@ -413,7 +416,8 @@ export function simulateBattle(
         const specialty = specialtyBonus(hero?.specialty, unit.stack.kind, hero?.specialtyScale ?? 1, siege);
         const resistance = specialtyBonus(foe?.specialty, target.kind, foe?.specialtyScale ?? 1, siege);
         const total = attackTotal(unit.stack, target, wallPercent, rng,
-          (hero?.atkPercent ?? 0) + specialty.atkPercent, (foe?.defPercent ?? 0) + resistance.defPercent);
+          (hero?.atkPercent ?? 0) + specialty.atkPercent + (hero?.troopBonuses?.[unit.stack.kind]?.atkPercent ?? 0),
+          (foe?.defPercent ?? 0) + resistance.defPercent + (foe?.troopBonuses?.[target.kind]?.defPercent ?? 0));
         if (total > 0) {
           attacks.push({ att: unit.stack, target, total, byAttacker: unit.side === 0 });
         }

@@ -350,7 +350,21 @@ export function WorldMapGrid({ win, selected, accountId, onSelect, onPan, onPanT
                   isSelected ? 'z-[1] shadow-[0_0_0_2px_var(--accent),0_0_14px_var(--accent-dim)]' : ''
                 }`}
               >
-                {isCity ? (
+                {tile.kind === 'dungeon' ? (
+                  // 副本入口（v61）：金框「关」字 + 副本名，与城池 / 野地区分
+                  <>
+                    <span
+                      role="世界地图视野-副本入口"
+                      aria-hidden="true"
+                      className="grid aspect-square w-[42%] place-items-center rounded-[3px] border border-gold bg-panel/70 font-semibold leading-none text-gold text-[clamp(9px,2.2cqw,18px)] drop-shadow-[0_0_4px_var(--gold)]"
+                    >
+                      {copy.DUNGEON_COPY.lineup.mapGlyph}
+                    </span>
+                    <span role="世界地图视野-副本名" className="absolute inset-x-0.5 bottom-[4%] truncate @max-lg:hidden text-center text-[clamp(8px,1.25cqw,12px)] leading-tight text-gold">
+                      {tile.dungeon ? tName(tile.dungeon.name) : TILE_KIND_LABEL.dungeon}
+                    </span>
+                  </>
+                ) : isCity ? (
                   <>
                     <CityMark side={citySide(tile, isOwn)} className="w-[42%] text-[clamp(9px,2.2cqw,18px)]" />
                     {tile.kind === 'npc_city' && tile.npcStockTier ? (

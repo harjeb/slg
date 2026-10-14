@@ -20,6 +20,7 @@ import { armyPower } from '../../common/src/battle';
 import { WOUND_HOURS } from '../../common/src/hero';
 import { scaledMs } from '../../common/src/time-scale';
 import { battleBonusOf, grantHeroExp, loadHero, woundHero, type AccountHeroRow } from '../../common/src/hero-db';
+import { itemMarchPercent } from '../../common/src/items';
 import { insertBattleReport, withSideStats, type BattleReportDetail } from '../../common/src/battle-db';
 
 /** 战报类别（BattleReportView.kind 取值；v21 新增 city_raid = NPC 袭击玩家主城；v38 新增 pvp_raid = 玩家攻打玩家城；v39 新增 pvp_wilderness = 玩家抢占玩家野地） */
@@ -99,18 +100,20 @@ export interface MarchRow {
   ambush_at?: Date | null;
   /** v36（AISLG-114）：随队武将 id，其余为 null */
   hero_id?: string | null;
+  /** v61：副本副将 id（返程沿用），其余为 null */
+  deputy_hero_ids?: string[] | null;
 }
 
 /** 结束后经 pg_notify 发给 API 的载荷（battle_report 为 v13 新增；
  *  server_broadcast 为 v23 新增——broadcast 为完整播报视图，全服广播） */
 export interface TileNotify {
-  reason: 'march_resolved' | 'tile_changed' | 'battle_report' | 'server_broadcast' | 'hero_state';
+  reason: 'march_resolved' | 'tile_changed' | 'battle_report' | 'server_broadcast' | 'hero_state' | 'dungeon_state';
   accountId: string;
   marchId?: string;
   x?: number;
   y?: number;
   tileReason?: string;
-  /** reason='hero_state' 时的武将推送载荷（PUSH_HERO_STATE 的 data） */
+  /** reason='hero_state' / 'dungeon_state' 时的推送载荷（PUSH_HERO_STATE / PUSH_DUNGEON_STATE 的 data） */
   data?: Record<string, unknown>;
   /** reason='battle_report' 时的战报 id */
   reportId?: number;
@@ -215,7 +218,7 @@ export async function loadCityNaming(
 
 /**
  * 创建返程行军（from = 行军涉及地块，目的地 = 出发城；按编队最慢兵种速度）。
- * 空编队不产生行军（全灭无部队可撤）；出发城坐标不可用（重置删城等）返回 null，
+ * 空编队仍让随队武将返程（沿用出征编队速度）；无兵无将或出发城坐标不可用时返回 null，
  * 调用方按「部队随之消失」处理。v15 起战败幸存者撤回（battle_lost）也走本入口。
  */
 export async function createReturnMarch(
@@ -227,8 +230,9 @@ export async function createReturnMarch(
   cargo?: Resources | null,
 ): Promise<string | null> {
   const hasTroops = Object.values(troops).some((count) => Math.floor(count ?? 0) > 0);
+  const hasHeroes = !!march.hero_id || !!march.deputy_hero_ids?.length;
   const coords = settled.row;
-  if (!hasTroops || !coords || coords.x === null || coords.y === null) {
+  if ((!hasTroops && !hasHeroes) || !coords || coords.x === null || coords.y === null) {
     return null;
   }
   // v27：返程同样吃行军科技加成（账号级，按返程发起时的等级）
@@ -238,13 +242,16 @@ export async function createReturnMarch(
     march.purpose === 'transfer' || march.purpose === 'transport'
       ? stationPercent((await loadBuildingLevels(client, march.from_city_id)).post_station)
       : 0;
-  const travel = marchTravelSeconds(coords.x, coords.y, march.x, march.y, troops, marchingPercent(techs) + station);
-  // v36（AISLG-114）：随队武将跟着残部返程（行军中仍占用；回城后自然释放）
+  // v58：随队主将的坐骑加速返程
+  const mount = march.hero_id ? itemMarchPercent((await loadHero(client, march.hero_id))?.equip_def) : 0;
+  const travelTroops = hasTroops ? troops : march.troops ?? {};
+  const travel = marchTravelSeconds(coords.x, coords.y, march.x, march.y, travelTroops, marchingPercent(techs) + station + mount);
+  // v36（AISLG-114）：随队武将跟着残部返程（行军中仍占用；回城后自然释放）；v61 副本副将同样随队
   const ins = await client.query(
-    `INSERT INTO marches (account_id, from_city_id, x, y, troops, purpose, status, initiator, arrive_at, cargo, hero_id)
-     VALUES ($1, $2, $3, $4, $5::jsonb, 'return', 'marching', $6, now() + make_interval(secs => $7), $8::jsonb, $9)
+    `INSERT INTO marches (account_id, from_city_id, x, y, troops, purpose, status, initiator, arrive_at, cargo, hero_id, deputy_hero_ids)
+     VALUES ($1, $2, $3, $4, $5::jsonb, 'return', 'marching', $6, now() + make_interval(secs => $7), $8::jsonb, $9, $10::uuid[])
      RETURNING id`,
-    [march.account_id, march.from_city_id, march.x, march.y, JSON.stringify(troops), initiator, travel, cargo ? JSON.stringify(cargo) : null, march.hero_id ?? null],
+    [march.account_id, march.from_city_id, march.x, march.y, JSON.stringify(troops), initiator, travel, cargo ? JSON.stringify(cargo) : null, march.hero_id ?? null, march.deputy_hero_ids ?? null],
   );
   return ins.rows[0].id as string;
 }
@@ -265,7 +272,7 @@ export async function abortMarchToReturn(
   troops: Partial<Record<TroopKind, number>>,
   settled: { row: { x: number | null; y: number | null } | null },
   notifies: TileNotify[],
-): Promise<void> {
+): Promise<string | null> {
   // 运输行军目标失效：货物随部队原路带回（v26）；空编队无法返程时货物退还出发城
   const cargo = readCargo(march.cargo);
   const created = await createReturnMarch(client, march, troops, settled, march.initiator, cargo);
@@ -275,6 +282,7 @@ export async function abortMarchToReturn(
   await markMarchArrived(client, march.id);
   await completeMarchEvent(client, march, 'aborted', { troops, returning: created, ...(cargo ? { cargo } : {}) });
   notifies.push({ reason: 'march_resolved', accountId: march.account_id, marchId: march.id });
+  return created;
 }
 
 /** 增援到达并入驻军、行军结算完成并推送（reinforce 目的与 plunder/occupy 转增援共用） */

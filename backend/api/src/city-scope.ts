@@ -26,6 +26,7 @@ export const CITY_SCOPED_OPS: ReadonlySet<number> = new Set([
   Op.RENAME_CITY,
   Op.RECRUIT,
   Op.MARCH,
+  Op.ENTER_DUNGEON,
   Op.SCOUT,
   Op.EXCHANGE,
   Op.GET_TECHS,

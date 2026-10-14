@@ -77,7 +77,9 @@ export function TargetHeader({ world, city, x, y, detail, origin, branch, now, m
     ? TARGET_COPY.detailTitle(x, y)
     : detail.camp
       ? detail.camp.label
-      : detail.kind === 'city'
+      : detail.kind === 'dungeon'
+        ? (detail.dungeon ? tName(detail.dungeon.name) : TILE_KIND_LABEL.dungeon)
+        : detail.kind === 'city'
         ? (detail.owner ? tName(detail.owner.cityName) : TILE_KIND_LABEL.city)
         : detail.kind === 'npc_city'
           ? detail.famous

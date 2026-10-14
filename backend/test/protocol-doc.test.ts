@@ -24,6 +24,10 @@ test('PROTOCOL_VERSION 为正整数', () => {
   assert.ok(Number.isInteger(PROTOCOL_VERSION) && PROTOCOL_VERSION >= 1);
 });
 
+test('协议号互不重复，避免请求或推送被路由到另一功能', () => {
+  assert.equal(VALID_OPS.size, Object.keys(Op).length);
+});
+
 test('OP_DOC 覆盖全部协议号', () => {
   for (const op of VALID_OPS) {
     assert.ok(OP_DOC_BY_NUMBER[op], `协议号 ${op} 缺少文档`);
